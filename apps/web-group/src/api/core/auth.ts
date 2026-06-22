@@ -1,20 +1,23 @@
 import { baseRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
-  /** 登录接口参数 */
   export interface LoginParams {
+    captchaCode?: string;
+    captchaId?: string;
     password?: string;
     username?: string;
   }
 
-  /** 登录接口返回值 */
   export interface LoginResult {
     accessToken: string;
+    expiresIn: number;
+    refreshToken: string;
+    tokenType: string;
   }
 
-  export interface RefreshTokenResult {
-    data: string;
-    status: number;
+  export interface CaptchaResult {
+    captchaBase64: string;
+    captchaId: string;
   }
 }
 
@@ -26,26 +29,30 @@ export async function loginApi(data: AuthApi.LoginParams) {
 }
 
 /**
- * 刷新accessToken
+ * 获取验证码
  */
-export async function refreshTokenApi() {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>('/auth/refresh', {
-    withCredentials: true,
+export async function getCaptchaApi() {
+  return requestClient.get<AuthApi.CaptchaResult>('/auth/captcha');
+}
+
+/**
+ * 刷新 accessToken
+ */
+export async function refreshTokenApi(refreshToken: string) {
+  const response = await baseRequestClient.post('/auth/refresh-token', null, {
+    params: { refreshToken },
+    responseReturn: 'body',
   });
+  const body = response as { code: string; data: AuthApi.LoginResult; msg: string };
+  if (body.code === '00000') {
+    return body.data;
+  }
+  throw new Error(body.msg || '刷新 Token 失败');
 }
 
 /**
  * 退出登录
  */
 export async function logoutApi() {
-  return baseRequestClient.post('/auth/logout', {
-    withCredentials: true,
-  });
-}
-
-/**
- * 获取用户权限码
- */
-export async function getAccessCodesApi() {
-  return requestClient.get<string[]>('/auth/codes');
+  return requestClient.delete('/auth/logout');
 }

@@ -1,0 +1,49 @@
+{
+  "title": "System",
+  "user": {
+    "title": "User Management",
+    "list": "User List",
+    "name": "User",
+    "username": "Username",
+    "nickname": "Nickname",
+    "keywords": "Keywords",
+    "gender": "Gender",
+    "genderMale": "Male",
+    "genderFemale": "Female",
+    "password": "Password",
+    "mobile": "Mobile",
+    "email": "Email",
+    "roles": "Roles",
+    "status": "Status",
+    "createTime": "Create Time",
+    "operation": "Operation"
+  },
+  "role": {
+    "title": "Role Management",
+    "list": "Role List",
+    "name": "Role",
+    "roleName": "Role Name",
+    "code": "Role Code",
+    "sort": "Sort",
+    "dataScope": "Data Scope",
+    "keywords": "Keywords",
+    "status": "Status",
+    "createTime": "Create Time",
+    "operation": "Operation"
+  },
+  "dict": {
+    "title": "Dictionary",
+    "list": "Dictionary List",
+    "name": "Dictionary",
+    "dictCode": "Dict Code",
+    "keywords": "Keywords",
+    "status": "Status",
+    "remark": "Remark",
+    "operation": "Operation",
+    "items": "Dict Items",
+    "itemLabel": "Label",
+    "itemValue": "Value",
+    "sort": "Sort",
+    "tagType": "Tag Type"
+  }
+}

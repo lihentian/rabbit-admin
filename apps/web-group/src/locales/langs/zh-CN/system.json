@@ -1,0 +1,49 @@
+{
+  "title": "系统管理",
+  "user": {
+    "title": "用户管理",
+    "list": "用户列表",
+    "name": "用户",
+    "username": "用户名",
+    "nickname": "昵称",
+    "keywords": "关键词",
+    "gender": "性别",
+    "genderMale": "男",
+    "genderFemale": "女",
+    "password": "密码",
+    "mobile": "手机号",
+    "email": "邮箱",
+    "roles": "角色",
+    "status": "状态",
+    "createTime": "创建时间",
+    "operation": "操作"
+  },
+  "role": {
+    "title": "角色管理",
+    "list": "角色列表",
+    "name": "角色",
+    "roleName": "角色名称",
+    "code": "角色编码",
+    "sort": "排序",
+    "dataScope": "数据权限",
+    "keywords": "关键词",
+    "status": "状态",
+    "createTime": "创建时间",
+    "operation": "操作"
+  },
+  "dict": {
+    "title": "字典管理",
+    "list": "字典列表",
+    "name": "字典",
+    "dictCode": "字典编码",
+    "keywords": "关键词",
+    "status": "状态",
+    "remark": "备注",
+    "operation": "操作",
+    "items": "字典项",
+    "itemLabel": "标签",
+    "itemValue": "值",
+    "sort": "排序",
+    "tagType": "标签样式"
+  }
+}

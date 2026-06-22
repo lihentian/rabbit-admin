@@ -8,7 +8,7 @@ import { preferences } from '@vben/preferences';
 
 import { message } from 'antdv-next';
 
-import { getAllMenusApi } from '#/api';
+import { getAllMenusApi } from '#/api/core/menu';
 import { BasicLayout, IFrameView } from '#/layouts';
 import { $t } from '#/locales';
 
