@@ -8,6 +8,8 @@ export namespace SystemRoleApi {
     code: string;
     createTime?: string;
     dataScope?: number;
+    dataScopeLabel?: string;
+    deptIds?: string[];
     id: string;
     name: string;
     sort?: number;
@@ -51,12 +53,22 @@ async function getRoleOptions() {
   );
 }
 
+async function getRoleMenuIds(roleId: string) {
+  return requestClient.get<string[]>(`/roles/${roleId}/menu-ids`);
+}
+
+async function updateRoleMenus(roleId: string, menuIds: string[]) {
+  return requestClient.put(`/roles/${roleId}/menus`, menuIds);
+}
+
 export {
   createRole,
   deleteRole,
   getRoleForm,
   getRoleList,
+  getRoleMenuIds,
   getRoleOptions,
   updateRole,
+  updateRoleMenus,
   updateRoleStatus,
 };

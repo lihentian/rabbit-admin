@@ -8,13 +8,19 @@ export namespace Jx3DungeonApi {
     dungeonName: string;
     id: string;
     playerCount: number;
-    refreshCycle?: number;
+    price: number;
+    seniority: number;
+    version: string;
+    remark?: null | string;
   }
 
   export interface DungeonOption {
     label: string;
     playerCount: number;
+    price: number;
+    seniority: number;
     value: string;
+    version: string;
   }
 }
 
@@ -43,10 +49,9 @@ async function deleteDungeon(ids: string | string[]) {
 }
 
 async function getDungeonOptions(playerCount?: number) {
-  return requestClient.get<Jx3DungeonApi.DungeonOption[]>(
-    '/jx3/dungeons/options',
-    { params: playerCount === undefined ? undefined : { playerCount } },
-  );
+  return requestClient.get<Jx3DungeonApi.DungeonOption[]>('/jx3/dungeons/options', {
+    params: playerCount === undefined ? undefined : { playerCount },
+  });
 }
 
 export {

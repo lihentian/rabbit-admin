@@ -21,10 +21,16 @@ import {
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
+import AssignPerm from './modules/assign-perm.vue';
 import Form from './modules/form.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
+  destroyOnClose: true,
+});
+
+const [AssignPermDrawer, assignPermDrawerApi] = useVbenDrawer({
+  connectedComponent: AssignPerm,
   destroyOnClose: true,
 });
 
@@ -64,6 +70,10 @@ function onEdit(row: SystemRoleApi.SystemRole) {
   formDrawerApi.setData(row).open();
 }
 
+function onAssignPerm(row: SystemRoleApi.SystemRole) {
+  assignPermDrawerApi.setData(row).open();
+}
+
 function onDelete(row: SystemRoleApi.SystemRole) {
   const hideLoading = message.loading({
     content: $t('ui.actionMessage.deleting', [row.name]),
@@ -88,6 +98,10 @@ function onActionClick({
   row,
 }: OnActionClickParams<SystemRoleApi.SystemRole>) {
   switch (code) {
+    case 'assign': {
+      onAssignPerm(row);
+      break;
+    }
     case 'delete': {
       onDelete(row);
       break;
@@ -142,6 +156,7 @@ function onCreate() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <AssignPermDrawer @success="onRefresh" />
     <Grid :table-title="$t('system.role.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">

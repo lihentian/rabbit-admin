@@ -32,7 +32,7 @@ function onCreate() {
 
 function onDelete(row: Jx3SpecApi.Spec) {
   deleteSpec(row.id).then(() => {
-    message.success($t('ui.actionMessage.deleteSuccess', [row.specName]));
+    message.success($t('ui.actionMessage.deleteSuccess', [row.specAlias]));
     refreshGrid();
   });
 }

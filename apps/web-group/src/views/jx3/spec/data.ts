@@ -2,6 +2,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { Jx3SpecApi } from '#/api/jx3/spec';
 
+import { getSectOptions } from '#/api/jx3/sect';
 import { $t } from '#/locales';
 
 function usePositionOptions() {
@@ -22,8 +23,14 @@ function useAttackTypeOptions() {
 export function useFormSchema(): VbenFormSchema[] {
   return [
     {
-      component: 'Input',
-      fieldName: 'sectName',
+      component: 'ApiSelect',
+      componentProps: {
+        api: getSectOptions,
+        class: 'w-full',
+        labelField: 'label',
+        valueField: 'value',
+      },
+      fieldName: 'sectId',
       label: $t('jx3.spec.sectName'),
       rules: 'required',
     },
@@ -35,8 +42,9 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     {
       component: 'Input',
-      fieldName: 'alias',
-      label: $t('jx3.spec.alias'),
+      fieldName: 'specAlias',
+      label: $t('jx3.spec.specAlias'),
+      rules: 'required',
     },
     {
       component: 'Select',
@@ -64,6 +72,11 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('jx3.spec.attackType'),
     },
     {
+      component: 'Input',
+      fieldName: 'specIcon',
+      label: $t('jx3.spec.specIcon'),
+    },
+    {
       component: 'InputNumber',
       componentProps: { class: 'w-full' },
       defaultValue: 0,
@@ -79,6 +92,18 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'keywords',
       label: $t('jx3.spec.keywords'),
+    },
+    {
+      component: 'ApiSelect',
+      componentProps: {
+        allowClear: true,
+        api: getSectOptions,
+        class: 'w-full',
+        labelField: 'label',
+        valueField: 'value',
+      },
+      fieldName: 'sectId',
+      label: $t('jx3.spec.sectName'),
     },
     {
       component: 'Select',
@@ -100,9 +125,19 @@ export function useColumns(
   const attackTypeOptions = useAttackTypeOptions();
 
   return [
+    {
+      align: 'center',
+      cellRender: {
+        name: 'CellImage',
+        props: { height: 32, width: 32 },
+      },
+      field: 'specIcon',
+      title: $t('jx3.spec.specIcon'),
+      width: 70,
+    },
     { field: 'sectName', title: $t('jx3.spec.sectName'), width: 120 },
     { field: 'specName', title: $t('jx3.spec.specName'), width: 120 },
-    { field: 'alias', minWidth: 100, title: $t('jx3.spec.alias') },
+    { field: 'specAlias', minWidth: 120, title: $t('jx3.spec.specAlias') },
     {
       field: 'position',
       formatter: ({ cellValue }) =>
@@ -124,7 +159,7 @@ export function useColumns(
       align: 'center',
       cellRender: {
         attrs: {
-          nameField: 'specName',
+          nameField: 'specAlias',
           nameTitle: $t('jx3.spec.name'),
           onClick: onActionClick,
           options: ['edit', 'delete'],

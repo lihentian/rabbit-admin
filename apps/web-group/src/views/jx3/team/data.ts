@@ -1,18 +1,17 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type { OnActionClickParams, OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
+import type { OnActionClickFn, OnActionClickParams, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { Jx3CharacterApi } from '#/api/jx3/character';
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { getCharacterList, getCharacterSpecs } from '#/api/jx3/character';
-import { getDungeonOptions } from '#/api/jx3/dungeon';
-import { usePlayerCountOptions } from '#/views/jx3/dungeon/data';
+import { getDungeonTemplateOptions } from '#/api/jx3/dungeon-template';
 import { $t } from '#/locales';
+import { useDungeonGroupedSelectProps, usePlayerCountOptions } from '#/views/jx3/dungeon/data';
 
-export function useBuildTypeOptions() {
+export function useOpenOptions() {
   return [
-    { label: $t('jx3.team.buildTypeSelf'), value: 1 },
-    { label: $t('jx3.team.buildTypeService'), value: 2 },
-    { label: $t('jx3.team.buildTypeMixed'), value: 3 },
+    { color: 'default', label: $t('jx3.team.isOpenNo'), value: 0 },
+    { color: 'success', label: $t('jx3.team.isOpenYes'), value: 1 },
   ];
 }
 
@@ -31,12 +30,11 @@ export function useJoinTypeOptions() {
   ];
 }
 
-async function getDungeonSelectOptions() {
-  const list = await getDungeonOptions();
+async function getTemplateSelectOptions() {
+  const list = await getDungeonTemplateOptions();
   return list.map((item) => ({
-    label: `${item.label}（${item.playerCount}${$t('jx3.dungeon.playerCountUnit')}）`,
+    label: item.label,
     value: item.value,
-    playerCount: item.playerCount,
   }));
 }
 
@@ -49,28 +47,35 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
-      component: 'RadioGroup',
-      componentProps: {
-        buttonStyle: 'solid',
-        options: useBuildTypeOptions(),
-        optionType: 'button',
-      },
-      defaultValue: 2,
-      fieldName: 'buildType',
-      label: $t('jx3.team.buildType'),
+      component: 'ApiSelect',
+      componentProps: useDungeonGroupedSelectProps(),
+      fieldName: 'dungeonId',
+      label: $t('jx3.team.dungeonId'),
       rules: 'required',
     },
     {
       component: 'ApiSelect',
       componentProps: {
-        api: getDungeonSelectOptions,
+        allowClear: true,
+        api: getTemplateSelectOptions,
         class: 'w-full',
         labelField: 'label',
         valueField: 'value',
       },
-      fieldName: 'dungeonId',
-      label: $t('jx3.team.dungeonId'),
-      rules: 'required',
+      fieldName: 'templateId',
+      label: $t('jx3.team.templateId'),
+    },
+    {
+      component: 'Switch',
+      componentProps: {
+        checkedChildren: $t('jx3.team.isOpenYes'),
+        checkedValue: 1,
+        unCheckedChildren: $t('jx3.team.isOpenNo'),
+        unCheckedValue: 0,
+      },
+      defaultValue: 0,
+      fieldName: 'isOpen',
+      label: $t('jx3.team.isOpen'),
     },
   ];
 }
@@ -110,23 +115,27 @@ export function useColumns(
   onActionClick: OnActionClickFn<Jx3TeamApi.Team>,
 ): VxeTableGridColumns {
   return [
-    { field: 'teamName', title: $t('jx3.team.teamName'), minWidth: 140 },
+    { field: 'teamName', title: $t('jx3.team.teamName'), width: 140 },
+    { field: 'dungeonName', title: $t('jx3.team.dungeonId'), width: 120 },
     {
-      field: 'buildType',
-      formatter: ({ cellValue }) => {
-        const option = useBuildTypeOptions().find(
-          (item) => item.value === cellValue,
-        );
-        return option?.label ?? cellValue;
-      },
-      title: $t('jx3.team.buildType'),
-      width: 110,
+      field: 'templateName',
+      formatter: ({ cellValue }) => cellValue ?? '-',
+      title: $t('jx3.team.templateName'),
+      minWidth: 100,
     },
-    { field: 'dungeonName', title: $t('jx3.team.dungeonId'), minWidth: 120 },
+    {
+      cellRender: {
+        name: 'CellTag',
+        options: useOpenOptions(),
+      },
+      field: 'isOpen',
+      title: $t('jx3.team.isOpen'),
+      width: 100,
+    },
     {
       field: 'memberCount',
       formatter: ({ row }) => `${row.memberCount ?? 0}/${row.playerCount ?? '-'}`,
-      title: `${$t('jx3.team.memberCount')}/${$t('jx3.dungeon.playerCount')}`,
+      title: $t('jx3.team.memberPlayerCount'),
       width: 110,
     },
     {
@@ -168,13 +177,34 @@ export function useMemberColumns(
     {
       field: 'characterName',
       title: $t('jx3.team.characterId'),
-      minWidth: 120,
+      width: 120,
     },
-    { field: 'specName', title: $t('jx3.team.characterSpecId'), width: 120 },
+    { field: 'specAlias', title: $t('jx3.team.characterSpecId'), minWidth: 120 },
     {
       field: 'combatPower',
       title: $t('jx3.character.combatPower'),
       width: 100,
+    },
+    {
+      field: 'coversSmallIron',
+      formatter: ({ cellValue }) =>
+        cellValue ? $t('common.yes') : $t('common.no'),
+      title: $t('jx3.team.coversSmallIron'),
+      width: 90,
+    },
+    {
+      field: 'coversBigIron',
+      formatter: ({ cellValue }) =>
+        cellValue ? $t('common.yes') : $t('common.no'),
+      title: $t('jx3.team.coversBigIron'),
+      width: 90,
+    },
+    {
+      field: 'coversTeam',
+      formatter: ({ cellValue }) =>
+        cellValue ? $t('common.yes') : $t('common.no'),
+      title: $t('jx3.team.coversTeam'),
+      width: 90,
     },
     {
       field: 'joinType',
@@ -211,8 +241,8 @@ export function useMemberColumns(
   ];
 }
 
-export function useJoinFormSchema(): VbenFormSchema[] {
-  return [
+export function useJoinFormSchema(isOpen = false): VbenFormSchema[] {
+  const schema: VbenFormSchema[] = [
     {
       component: 'ApiSelect',
       componentProps: {
@@ -250,17 +280,37 @@ export function useJoinFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      component: 'Checkbox',
+      fieldName: 'coversSmallIron',
+      label: $t('jx3.team.coversSmallIron'),
+    },
+    {
+      component: 'Checkbox',
+      fieldName: 'coversBigIron',
+      label: $t('jx3.team.coversBigIron'),
+    },
+    {
+      component: 'Checkbox',
+      fieldName: 'coversTeam',
+      label: $t('jx3.team.coversTeam'),
+    },
+  ];
+
+  if (isOpen) {
+    schema.splice(2, 0, {
       component: 'Select',
       componentProps: {
         class: 'w-full',
         options: useJoinTypeOptions(),
       },
-      defaultValue: 1,
+      defaultValue: 2,
       fieldName: 'joinType',
       label: $t('jx3.team.joinType'),
       rules: 'required',
-    },
-  ];
+    });
+  }
+
+  return schema;
 }
 
 async function getCharacterOptions(params?: Record<string, any>) {
@@ -278,7 +328,7 @@ async function getCharacterSpecOptions(params?: Record<string, any>) {
   if (!params?.characterId) return [];
   const specs = await getCharacterSpecs(params.characterId);
   return specs.map((item) => ({
-    label: item.specName ?? item.specId,
+    label: item.specAlias ?? item.specId,
     value: item.id,
   }));
 }

@@ -11,18 +11,28 @@ const routes: RouteRecordRaw[] = [
     },
     name: 'Jx3',
     path: '/jx3',
+    redirect: '/jx3/server',
     children: [
       {
-        path: '/jx3/game-server',
-        name: 'Jx3GameServer',
+        path: 'server',
+        name: 'Jx3Server',
         meta: {
           icon: 'mdi:server',
           title: $t('jx3.gameServer.title'),
         },
-        component: () => import('#/views/jx3/game-server/list.vue'),
+        component: () => import('#/views/jx3/server/list.vue'),
       },
       {
-        path: '/jx3/spec',
+        path: 'sect',
+        name: 'Jx3Sect',
+        meta: {
+          icon: 'mdi:yin-yang',
+          title: $t('jx3.sect.title'),
+        },
+        component: () => import('#/views/jx3/sect/list.vue'),
+      },
+      {
+        path: 'spec',
         name: 'Jx3Spec',
         meta: {
           icon: 'mdi:yin-yang',
@@ -31,7 +41,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/jx3/spec/list.vue'),
       },
       {
-        path: '/jx3/dungeon',
+        path: 'dungeon',
         name: 'Jx3Dungeon',
         meta: {
           icon: 'mdi:castle',
@@ -40,7 +50,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/jx3/dungeon/list.vue'),
       },
       {
-        path: '/jx3/account',
+        path: 'dungeon-template',
+        name: 'Jx3DungeonTemplate',
+        meta: {
+          icon: 'mdi:file-document-outline',
+          title: $t('jx3.dungeonTemplate.title'),
+        },
+        component: () => import('#/views/jx3/dungeon-template/list.vue'),
+      },
+      {
+        path: 'account',
         name: 'Jx3Account',
         meta: {
           icon: 'mdi:account-key',
@@ -49,16 +68,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/jx3/account/list.vue'),
       },
       {
-        path: '/jx3/character',
+        path: 'character',
         name: 'Jx3Character',
         meta: {
-          icon: 'mdi:account-sword',
+          icon: 'mdi:human-male',
           title: $t('jx3.character.title'),
         },
         component: () => import('#/views/jx3/character/list.vue'),
       },
       {
-        path: '/jx3/team',
+        path: 'team',
         name: 'Jx3Team',
         meta: {
           icon: 'mdi:account-group',

@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { SystemDictApi } from '#/api/system/dict';
 
-import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenModal } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
@@ -18,9 +18,8 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
-import ItemDrawer from './modules/item-drawer.vue';
 
-const itemDrawerRef = ref<InstanceType<typeof ItemDrawer>>();
+const router = useRouter();
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
@@ -55,8 +54,14 @@ function onActionClick({
       onEdit(row);
       break;
     }
-    case 'items': {
-      itemDrawerRef.value?.open(row);
+    case 'data': {
+      router.push({
+        name: 'DictItem',
+        query: {
+          dictCode: row.dictCode,
+          title: $t('system.dict.dictDataTitle', [row.name]),
+        },
+      });
       break;
     }
   }
@@ -101,7 +106,6 @@ function refreshGrid() {
 <template>
   <Page auto-content-height>
     <FormModal @success="refreshGrid" />
-    <ItemDrawer ref="itemDrawerRef" />
     <Grid :table-title="$t('system.dict.list')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">

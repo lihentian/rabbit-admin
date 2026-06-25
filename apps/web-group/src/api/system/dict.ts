@@ -81,6 +81,12 @@ async function deleteDictItem(
   return requestClient.delete(`/dicts/${dictCode}/items/${idStr}`);
 }
 
+async function getDictItemOptions(dictCode: string) {
+  return requestClient.get<Array<{ label: string; value: string }>>(
+    `/dicts/${dictCode}/items/options`,
+  );
+}
+
 export {
   createDict,
   createDictItem,
@@ -89,6 +95,7 @@ export {
   getDictForm,
   getDictItemForm,
   getDictItemList,
+  getDictItemOptions,
   getDictList,
   updateDict,
   updateDictItem,

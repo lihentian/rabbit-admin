@@ -8,16 +8,16 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
   return [
     {
       component: 'Input',
+      fieldName: 'name',
+      label: $t('system.dict.dictName'),
+      rules: 'required',
+    },
+    {
+      component: 'Input',
       fieldName: 'dictCode',
       label: $t('system.dict.dictCode'),
       rules: 'required',
       componentProps: { disabled: isEdit },
-    },
-    {
-      component: 'Input',
-      fieldName: 'name',
-      label: $t('system.dict.name'),
-      rules: 'required',
     },
     {
       component: 'RadioGroup',
@@ -99,12 +99,22 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
+export function useItemGridFormSchema(): VbenFormSchema[] {
+  return [
+    {
+      component: 'Input',
+      fieldName: 'keywords',
+      label: $t('system.dict.keywords'),
+    },
+  ];
+}
+
 export function useColumns(
   onActionClick: OnActionClickFn<SystemDictApi.Dict>,
 ): VxeTableGridColumns {
   return [
+    { field: 'name', title: $t('system.dict.dictName'), width: 150 },
     { field: 'dictCode', title: $t('system.dict.dictCode'), width: 150 },
-    { field: 'name', title: $t('system.dict.name'), width: 150 },
     {
       cellRender: {
         name: 'CellTag',
@@ -125,18 +135,14 @@ export function useColumns(
           nameField: 'name',
           nameTitle: $t('system.dict.name'),
           onClick: onActionClick,
-          options: [
-            { code: 'items', text: $t('system.dict.items') },
-            'edit',
-            'delete',
-          ],
         },
         name: 'CellOperation',
+        options: [{ code: 'data', text: $t('system.dict.dictData') }, 'edit', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.dict.operation'),
-      width: 200,
+      width: 220,
     },
   ];
 }
@@ -145,8 +151,8 @@ export function useItemColumns(
   onActionClick: OnActionClickFn<SystemDictApi.DictItem>,
 ): VxeTableGridColumns {
   return [
-    { field: 'label', title: $t('system.dict.itemLabel'), width: 120 },
-    { field: 'value', title: $t('system.dict.itemValue'), width: 120 },
+    { field: 'label', minWidth: 120, title: $t('system.dict.itemLabel') },
+    { field: 'value', minWidth: 120, title: $t('system.dict.itemValue') },
     { field: 'sort', title: $t('system.dict.sort'), width: 80 },
     {
       cellRender: {
@@ -160,7 +166,8 @@ export function useItemColumns(
       title: $t('system.dict.status'),
       width: 90,
     },
-    { field: 'tagType', title: $t('system.dict.tagType'), width: 100 },
+    { field: 'tagType', minWidth: 100, title: $t('system.dict.tagType') },
+    { field: 'remark', minWidth: 120, title: $t('system.dict.remark') },
     {
       align: 'center',
       cellRender: {

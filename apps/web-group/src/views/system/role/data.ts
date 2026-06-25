@@ -2,7 +2,16 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { SystemRoleApi } from '#/api/system/role';
 
+import { getDeptOptions } from '#/api/system/dept';
 import { $t } from '#/locales';
+
+export const DATA_SCOPE_OPTIONS = [
+  { label: $t('system.role.dataScopeAll'), value: 1 },
+  { label: $t('system.role.dataScopeDeptAndSub'), value: 2 },
+  { label: $t('system.role.dataScopeDept'), value: 3 },
+  { label: $t('system.role.dataScopeSelf'), value: 4 },
+  { label: $t('system.role.dataScopeCustom'), value: 5 },
+];
 
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -26,10 +35,36 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('system.role.sort'),
     },
     {
-      component: 'InputNumber',
-      componentProps: { class: 'w-full' },
+      component: 'Select',
+      componentProps: {
+        allowClear: false,
+        class: 'w-full',
+        options: DATA_SCOPE_OPTIONS,
+      },
+      defaultValue: 4,
       fieldName: 'dataScope',
       label: $t('system.role.dataScope'),
+      rules: 'required',
+    },
+    {
+      component: 'ApiTreeSelect',
+      componentProps: {
+        allowClear: true,
+        api: getDeptOptions,
+        class: 'w-full',
+        labelField: 'label',
+        multiple: true,
+        treeCheckable: true,
+        valueField: 'value',
+        childrenField: 'children',
+      },
+      dependencies: {
+        show: (values) => values.dataScope === 5,
+        triggerFields: ['dataScope'],
+      },
+      fieldName: 'deptIds',
+      label: $t('system.role.customDepts'),
+      rules: 'required',
     },
     {
       component: 'RadioGroup',
@@ -67,6 +102,11 @@ export function useColumns<T = SystemRoleApi.SystemRole>(
     { field: 'code', title: $t('system.role.code'), width: 150 },
     { field: 'sort', title: $t('system.role.sort'), width: 80 },
     {
+      field: 'dataScopeLabel',
+      title: $t('system.role.dataScope'),
+      width: 160,
+    },
+    {
       cellRender: {
         attrs: { beforeChange: onStatusChange },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
@@ -89,11 +129,16 @@ export function useColumns<T = SystemRoleApi.SystemRole>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
+        options: [
+          { code: 'assign', text: $t('system.role.assignPerm') },
+          'edit',
+          'delete',
+        ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.role.operation'),
-      width: 130,
+      width: 220,
     },
   ];
 }

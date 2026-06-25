@@ -25,7 +25,7 @@ const emit = defineEmits<{ success: [] }>();
 const teamRow = ref<Jx3TeamApi.Team>();
 
 const [JoinForm, joinFormApi] = useVbenForm({
-  schema: useJoinFormSchema(),
+  schema: useJoinFormSchema(false),
   showDefaultActions: false,
 });
 
@@ -60,7 +60,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onOpenChange(isOpen) {
     if (isOpen) {
       teamRow.value = drawerApi.getData<Jx3TeamApi.Team>();
+      joinFormApi.setState({
+        schema: useJoinFormSchema(teamRow.value?.isOpen === 1),
+      });
       joinFormApi.resetForm();
+      if (teamRow.value?.isOpen !== 1) {
+        joinFormApi.setValues({ joinType: 2 });
+      }
       memberGridApi.query();
     }
   },
@@ -76,9 +82,19 @@ async function onJoin() {
   const { valid } = await joinFormApi.validate();
   if (!valid || !teamRow.value) return;
   const values = await joinFormApi.getValues();
-  await joinTeam(teamRow.value.id, values);
+  const payload = {
+    ...values,
+    coversSmallIron: values.coversSmallIron ? 1 : 0,
+    coversBigIron: values.coversBigIron ? 1 : 0,
+    coversTeam: values.coversTeam ? 1 : 0,
+    joinType: teamRow.value.isOpen === 1 ? values.joinType : 2,
+  };
+  await joinTeam(teamRow.value.id, payload);
   message.success($t('jx3.team.joinSuccess'));
   joinFormApi.resetForm();
+  if (teamRow.value.isOpen !== 1) {
+    joinFormApi.setValues({ joinType: 2 });
+  }
   memberGridApi.query();
   emit('success');
 }

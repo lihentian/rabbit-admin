@@ -136,14 +136,14 @@ export function useColumns(
     {
       field: 'characterName',
       title: $t('jx3.character.characterName'),
-      minWidth: 120,
+      width: 120,
     },
     { field: 'accountId', title: $t('jx3.character.accountId'), width: 120 },
     { field: 'gameArea', title: $t('jx3.character.gameArea'), width: 100 },
     {
       field: 'gameServerId',
       title: $t('jx3.character.gameServerId'),
-      width: 120,
+      minWidth: 120,
     },
     {
       align: 'center',
@@ -172,17 +172,17 @@ export function useSpecColumns(
   onActionClick: OnActionClickFn<Jx3CharacterApi.CharacterSpec>,
 ): VxeTableGridColumns {
   return [
-    { field: 'specName', title: $t('jx3.character.specId'), minWidth: 120 },
+    { field: 'specAlias', title: $t('jx3.character.specId'), minWidth: 120 },
     {
       field: 'combatPower',
       title: $t('jx3.character.combatPower'),
-      width: 120,
+      minWidth: 120,
     },
     {
       align: 'center',
       cellRender: {
         attrs: {
-          nameField: 'specName',
+          nameField: 'specAlias',
           nameTitle: $t('jx3.character.specId'),
           onClick: onActionClick,
         },
@@ -206,8 +206,8 @@ export function useCdColumns(): VxeTableGridColumns {
     },
     {
       field: 'dungeonName',
-      minWidth: 140,
       title: $t('jx3.character.dungeonName'),
+      minWidth: 140,
     },
     {
       field: 'lastUsedTime',

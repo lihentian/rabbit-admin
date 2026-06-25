@@ -17,7 +17,7 @@ export namespace Jx3CharacterApi {
     combatPower: number;
     id: string;
     specId: string;
-    specName?: string;
+    specAlias?: string;
   }
 
   export interface DungeonCd {

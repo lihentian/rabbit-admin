@@ -97,8 +97,8 @@ export function useColumns(
 ): VxeTableGridColumns {
   return [
     { field: 'account', title: $t('jx3.account.account'), minWidth: 140 },
-    { field: 'userId', title: $t('jx3.account.userId'), width: 120 },
-    { field: 'serviceId', title: $t('jx3.account.serviceId'), width: 120 },
+    { field: 'userId', title: $t('jx3.account.userId'), minWidth: 120 },
+    { field: 'serviceId', title: $t('jx3.account.serviceId'), minWidth: 120 },
     {
       align: 'center',
       cellRender: {

@@ -5,12 +5,14 @@ import { requestClient } from '#/api/request';
 
 export namespace Jx3SpecApi {
   export interface Spec {
-    alias?: string;
-    attackType?: number | null;
+    attackType?: null | number;
     id: string;
     position: string;
-    sectName: string;
+    sectId: string;
+    sectName?: string;
     sort?: number;
+    specAlias: string;
+    specIcon?: null | string;
     specName: string;
   }
 }
@@ -45,11 +47,4 @@ async function getSpecOptions(position?: string) {
   >('/jx3/specs/options', { params: { position } });
 }
 
-export {
-  createSpec,
-  deleteSpec,
-  getSpecForm,
-  getSpecList,
-  getSpecOptions,
-  updateSpec,
-};
+export { createSpec, deleteSpec, getSpecForm, getSpecList, getSpecOptions, updateSpec };

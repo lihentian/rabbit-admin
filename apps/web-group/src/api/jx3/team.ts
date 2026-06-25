@@ -1,18 +1,25 @@
 import type { Recordable } from '@vben/types';
 
+import type { Jx3DungeonTemplateApi } from './dungeon-template';
+
 import { toPageParams, toPageResult } from '#/api/helper/pagination';
 import { requestClient } from '#/api/request';
 
 export namespace Jx3TeamApi {
   export interface Team {
-    buildType: number;
     dungeonId: string;
     dungeonName?: string;
     id: string;
+    isOpen: number;
     memberCount: number;
+    minNCount?: number;
+    minTCount?: number;
     playerCount: number;
     status: number;
     teamName: string;
+    templateId?: null | string;
+    templateName?: string;
+    specRules?: Jx3DungeonTemplateApi.SpecRule[] | null;
   }
 
   export interface TeamMember {
@@ -20,10 +27,13 @@ export namespace Jx3TeamApi {
     characterName?: string;
     characterSpecId?: string;
     combatPower?: number;
+    coversBigIron?: number;
+    coversSmallIron?: number;
+    coversTeam?: number;
     joinTime?: string;
     joinType?: number;
     position?: string;
-    specName?: string;
+    specAlias?: string;
   }
 }
 

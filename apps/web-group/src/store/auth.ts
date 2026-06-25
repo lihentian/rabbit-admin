@@ -11,6 +11,7 @@ import { notification } from 'antdv-next';
 import { defineStore } from 'pinia';
 
 import { getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { cleanupSse, useSse } from '#/composables/use-sse';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -20,10 +21,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const loginLoading = ref(false);
 
-  async function authLogin(
-    params: Recordable<any>,
-    onSuccess?: () => Promise<void> | void,
-  ) {
+  async function authLogin(params: Recordable<any>, onSuccess?: () => Promise<void> | void) {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
@@ -34,6 +32,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (refreshToken) {
           accessStore.setRefreshToken(refreshToken);
         }
+        useSse().connect();
 
         const fetchUserInfoResult = await fetchUserInfo();
         userInfo = fetchUserInfoResult;
@@ -45,9 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
         } else {
           onSuccess
             ? await onSuccess?.()
-            : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
-              );
+            : await router.push(userInfo.homePath || preferences.app.defaultHomePath);
         }
 
         if (userInfo?.realName) {
@@ -73,6 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // 不做任何处理
     }
+    cleanupSse();
     resetAllStores();
     accessStore.setLoginExpired(false);
 
