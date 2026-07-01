@@ -3,15 +3,18 @@ import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { computed, onMounted, ref, watch } from 'vue';
 
-import { useLocalStorage } from '@vueuse/core';
+import { useElementSize, useLocalStorage, useVirtualList } from '@vueuse/core';
 import { Input } from 'antdv-next';
 
 import { getSpecOptions } from '#/api/jx3/spec';
 import { $t } from '#/locales';
 
 import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
-import { POOL_CARD_MIN_WIDTH } from './member-card.constants';
-
+import {
+  POOL_CARD_MIN_WIDTH,
+  POOL_GRID_GAP,
+  POOL_ROW_HEIGHT,
+} from './member-card.constants';
 import MemberCard from './member-card.vue';
 
 type PositionFilter = 'all' | 'd' | 'n' | 't';
@@ -22,9 +25,6 @@ interface SpecFilterOption {
   specIcon?: null | string;
   specId: string;
 }
-
-const POOL_ATTR_FILTER_CD_KEY = 'jx3-team-pool-filter-cd';
-const POOL_ATTR_FILTER_CW_KEY = 'jx3-team-pool-filter-cw';
 
 const props = defineProps<{
   characters: Jx3TeamApi.AvailableCharacter[];
@@ -38,12 +38,14 @@ const props = defineProps<{
     id: string;
   };
 }>();
-
 const emit = defineEmits<{
   pickup: [character: Jx3TeamApi.AvailableCharacter, event: PointerEvent];
 }>();
+const POOL_ATTR_FILTER_CD_KEY = 'jx3-team-pool-filter-cd';
+const POOL_ATTR_FILTER_CW_KEY = 'jx3-team-pool-filter-cw';
 
-const poolCardFlexBasis = `${POOL_CARD_MIN_WIDTH}px`;
+const scrollContainerRef = ref<HTMLElement | null>(null);
+const { width: scrollWidth } = useElementSize(scrollContainerRef);
 
 const positionFilter = ref<PositionFilter>('all');
 const specFilterId = ref<null | string>(null);
@@ -147,6 +149,45 @@ const filteredPoolCharacters = computed(() => {
     })
     .sort((a, b) => b.combatPower - a.combatPower);
 });
+
+const columnCount = computed(() => {
+  const contentWidth = scrollWidth.value;
+  if (!contentWidth) return 1;
+  return Math.max(
+    1,
+    Math.floor((contentWidth + POOL_GRID_GAP) / (POOL_CARD_MIN_WIDTH + POOL_GRID_GAP)),
+  );
+});
+
+const poolRows = computed(() => {
+  const items = filteredPoolCharacters.value;
+  const cols = columnCount.value;
+  const rows: Jx3TeamApi.AvailableCharacter[][] = [];
+  for (let i = 0; i < items.length; i += cols) {
+    rows.push(items.slice(i, i + cols));
+  }
+  return rows;
+});
+
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(poolRows, {
+  itemHeight: POOL_ROW_HEIGHT,
+  overscan: 3,
+});
+
+const poolRowGridStyle = computed(() => ({
+  gridTemplateColumns: `repeat(${columnCount.value}, minmax(0, 1fr))`,
+  height: `${POOL_ROW_HEIGHT}px`,
+}));
+
+watch([searchKeyword, positionFilter, specFilterId, filterCd, filterCw], () => {
+  scrollTo(0);
+});
+
+function bindScrollContainer(el: unknown) {
+  const node = el instanceof HTMLElement ? el : null;
+  scrollContainerRef.value = node;
+  containerProps.ref.value = node;
+}
 
 function isSlottedItem(item: Jx3TeamApi.AvailableCharacter) {
   return props.slottedCharacterIds.has(item.characterId);
@@ -280,21 +321,34 @@ function poolAttrFilterBtnClass(active: boolean) {
       >
         {{ $t('jx3.team.poolSearchEmpty') }}
       </div>
-      <div v-else class="pool-list-body pool-list-scroll h-full min-h-0 w-full overflow-y-auto">
-        <div class="pool-card-grid px-2 pb-2">
-          <MemberCard
-            v-for="item in filteredPoolCharacters"
-            :key="`${item.characterId}-${item.characterSpecId}`"
-            class="min-w-0"
-            :character="item"
-            :cd-conflict="resolveCdConflict(item)"
-            :cd-conflict-message="resolveCdConflictMessage(item)"
-            :disabled="isSlottedItem(item)"
-            :dragging="isDraggingItem(item)"
-            :overlay="isSlottedItem(item)"
-            show-account-remark
-            @pickup="(e) => onPickup(item, e)"
-          />
+      <div
+        v-else
+        class="pool-list-body pool-list-scroll h-full min-h-0 w-full px-2 py-2"
+        :ref="bindScrollContainer"
+        :style="containerProps.style"
+        @scroll="containerProps.onScroll"
+      >
+        <div v-bind="wrapperProps">
+          <div
+            v-for="{ data: row, index } in list"
+            :key="index"
+            class="pool-card-row"
+            :style="poolRowGridStyle"
+          >
+            <MemberCard
+              v-for="item in row"
+              :key="`${item.characterId}-${item.characterSpecId}`"
+              class="min-w-0"
+              :character="item"
+              :cd-conflict="resolveCdConflict(item)"
+              :cd-conflict-message="resolveCdConflictMessage(item)"
+              :disabled="isSlottedItem(item)"
+              :dragging="isDraggingItem(item)"
+              :overlay="isSlottedItem(item)"
+              show-account-remark
+              @pickup="(e) => onPickup(item, e)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -317,10 +371,10 @@ function poolAttrFilterBtnClass(active: boolean) {
   display: none;
 }
 
-.pool-card-grid {
+.pool-card-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(v-bind(poolCardFlexBasis), 1fr));
   gap: 0.5rem;
+  align-items: start;
 }
 
 .spec-filter-btn:not(.spec-filter-btn--active):hover img {

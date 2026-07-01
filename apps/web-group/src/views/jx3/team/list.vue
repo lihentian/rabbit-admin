@@ -5,16 +5,16 @@ import type {
 } from '#/adapter/vxe-table';
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
-import { Button, message } from 'antdv-next';
+import { Button, message, Modal } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteTeam, getTeamList } from '#/api/jx3/team';
+import { completeTeam, deleteTeam, getTeamList } from '#/api/jx3/team';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -48,6 +48,59 @@ function onConfig(row: Jx3TeamApi.Team) {
 
 function onMembers(row: Jx3TeamApi.Team) {
   memberDrawerRef.value?.open(row);
+}
+
+function isTeamFull(team: Jx3TeamApi.Team) {
+  return (
+    team.status === 2 ||
+    (team.playerCount != null && (team.memberCount ?? 0) >= team.playerCount)
+  );
+}
+
+function confirmComplete(team: Jx3TeamApi.Team) {
+  const full = isTeamFull(team);
+  const memberSummary = `${team.memberCount ?? 0}/${team.playerCount ?? '-'}`;
+
+  return new Promise<void>((resolve, reject) => {
+    Modal.confirm({
+      cancelText: $t('common.cancel'),
+      content: full
+        ? $t('jx3.team.completeConfirm')
+        : h('div', { class: 'space-y-2' }, [
+            h(
+              'p',
+              { class: 'font-semibold text-destructive' },
+              $t('jx3.team.forceCompleteConfirm'),
+            ),
+            h(
+              'p',
+              { class: 'text-sm text-muted-foreground' },
+              `${$t('jx3.team.memberPlayerCount')}：${memberSummary}`,
+            ),
+          ]),
+      okText: $t('jx3.team.complete'),
+      okType: full ? 'primary' : 'danger',
+      onCancel() {
+        reject(new Error('cancelled'));
+      },
+      onOk() {
+        resolve();
+      },
+      title: $t('jx3.team.complete'),
+    });
+  });
+}
+
+async function onComplete(row: Jx3TeamApi.Team) {
+  if (row.status === 3) return;
+  try {
+    await confirmComplete(row);
+    await completeTeam(row.id, !isTeamFull(row));
+    message.success($t('jx3.team.completeSuccess'));
+    refreshGrid();
+  } catch {
+    // cancelled or failed
+  }
 }
 
 function onDelete(row: Jx3TeamApi.Team) {
@@ -85,6 +138,10 @@ function onActionClick({ code, row }: OnActionClickParams<Jx3TeamApi.Team>) {
     }
     case 'members': {
       onMembers(row);
+      break;
+    }
+    case 'complete': {
+      onComplete(row);
       break;
     }
   }

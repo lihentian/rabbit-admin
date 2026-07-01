@@ -16,5 +16,11 @@ export const SQUAD_COLUMN_MAX_WIDTH = 168;
 /** 角色池卡片最小列宽（px） */
 export const POOL_CARD_MIN_WIDTH = 168;
 
+/** 角色池网格间距（px，对应 gap: 0.5rem） */
+export const POOL_GRID_GAP = 8;
+
+/** 角色池虚拟列表行高（px）— 卡片高度 + 行间距 */
+export const POOL_ROW_HEIGHT = MEMBER_CARD_HEIGHT_WITH_REMARK + POOL_GRID_GAP;
+
 /** 角色池面板最小宽度（px） */
 export const POOL_PANEL_MIN_WIDTH = 200;

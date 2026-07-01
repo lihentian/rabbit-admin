@@ -1,33 +1,28 @@
 <script lang="ts" setup>
+import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { Copy, Plus } from '@vben/icons';
 
-import { Button, message, Modal, Space } from 'antdv-next';
+import { useElementSize } from '@vueuse/core';
+import { Button, message } from 'antdv-next';
 
-import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  completeTeam,
-  getTeamMembers,
-  joinTeam,
-  leaveTeam,
-} from '#/api/jx3/team';
+import { getTeamMembers, leaveTeam } from '#/api/jx3/team';
 import { $t } from '#/locales';
 
-import { useJoinFormSchema, useMemberColumns } from '../data';
+import { useMemberColumns } from '../data';
+import MemberJoinModal from './member-join-modal.vue';
 
 const emit = defineEmits<{ success: [] }>();
 
 const teamRow = ref<Jx3TeamApi.Team>();
-
-const [JoinForm, joinFormApi] = useVbenForm({
-  schema: useJoinFormSchema(false),
-  showDefaultActions: false,
-});
+const joinModalRef = ref<InstanceType<typeof MemberJoinModal>>();
+const gridWrapRef = ref<HTMLElement | null>(null);
+const { height: gridWrapHeight } = useElementSize(gridWrapRef);
 
 function onLeave(row: Jx3TeamApi.TeamMember) {
   if (!teamRow.value) return;
@@ -42,99 +37,53 @@ const [MemberGrid, memberGridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useMemberColumns(onLeave),
     height: 400,
+    pagerConfig: { enabled: false },
     proxyConfig: {
       ajax: {
         query: async () => {
-          if (!teamRow.value) return { items: [], total: 0 };
-          const items = await getTeamMembers(teamRow.value.id);
-          return { items, total: items.length };
+          if (!teamRow.value) return [];
+          return await getTeamMembers(teamRow.value.id);
         },
       },
     },
     rowConfig: { keyField: 'characterId' },
+    scrollY: { enabled: true, gt: 0 },
     toolbarConfig: { refresh: true },
   } as VxeTableGridOptions<Jx3TeamApi.TeamMember>,
+});
+
+watch(gridWrapHeight, (height) => {
+  if (height <= 0) return;
+  memberGridApi.setGridOptions({ height: Math.max(180, height) });
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
   onOpenChange(isOpen) {
     if (isOpen) {
       teamRow.value = drawerApi.getData<Jx3TeamApi.Team>();
-      joinFormApi.setState({
-        schema: useJoinFormSchema(teamRow.value?.isOpen === 1),
-      });
-      joinFormApi.resetForm();
-      if (teamRow.value?.isOpen !== 1) {
-        joinFormApi.setValues({ joinType: 2 });
-      }
       memberGridApi.query();
     }
   },
 });
 
 const drawerTitle = computed(() =>
-  teamRow.value
-    ? `${$t('jx3.team.members')} - ${teamRow.value.teamName}`
-    : $t('jx3.team.members'),
+  teamRow.value ? `${$t('jx3.team.members')} - ${teamRow.value.teamName}` : $t('jx3.team.members'),
 );
 
-async function onJoin() {
-  const { valid } = await joinFormApi.validate();
-  if (!valid || !teamRow.value) return;
-  const values = await joinFormApi.getValues();
-  const payload = {
-    ...values,
-    coversSmallIron: values.coversSmallIron ? 1 : 0,
-    coversBigIron: values.coversBigIron ? 1 : 0,
-    coversTeam: values.coversTeam ? 1 : 0,
-    joinType: teamRow.value.isOpen === 1 ? values.joinType : 2,
-  };
-  await joinTeam(teamRow.value.id, payload);
-  message.success($t('jx3.team.joinSuccess'));
-  joinFormApi.resetForm();
-  if (teamRow.value.isOpen !== 1) {
-    joinFormApi.setValues({ joinType: 2 });
-  }
+function onJoin() {
+  if (!teamRow.value) return;
+  joinModalRef.value?.open(teamRow.value);
+}
+
+function onJoinSuccess() {
   memberGridApi.query();
   emit('success');
 }
 
-function confirm(content: string, title: string) {
-  return new Promise((resolve, reject) => {
-    Modal.confirm({
-      content,
-      onCancel() {
-        reject(new Error('cancelled'));
-      },
-      onOk() {
-        resolve(true);
-      },
-      title,
-    });
-  });
-}
-
-async function onComplete(force = false) {
-  if (!teamRow.value) return;
-  try {
-    if (force) {
-      await confirm(
-        $t('jx3.team.forceCompleteConfirm'),
-        $t('jx3.team.forceComplete'),
-      );
-    } else {
-      await confirm(
-        $t('jx3.team.completeConfirm'),
-        $t('jx3.team.complete'),
-      );
-    }
-    await completeTeam(teamRow.value.id, force);
-    message.success($t('jx3.team.completeSuccess'));
-    emit('success');
-    drawerApi.close();
-  } catch {
-    // cancelled or failed
-  }
+async function copyText(text?: string) {
+  if (!text) return;
+  await navigator.clipboard.writeText(text);
+  message.success($t('ui.jsonViewer.copied'));
 }
 
 function open(row: Jx3TeamApi.Team) {
@@ -145,25 +94,81 @@ defineExpose({ open });
 </script>
 
 <template>
-  <Drawer :title="drawerTitle" class="w-[900px]">
-    <div class="mb-4">
-      <JoinForm />
-      <div class="mt-3 flex justify-end">
-        <Button type="primary" @click="onJoin">
-          {{ $t('jx3.team.join') }}
-        </Button>
-      </div>
-    </div>
-    <MemberGrid />
-    <div class="mt-4 flex justify-end">
-      <Space>
-        <Button type="primary" @click="onComplete(false)">
-          {{ $t('jx3.team.complete') }}
-        </Button>
-        <Button danger @click="onComplete(true)">
-          {{ $t('jx3.team.forceComplete') }}
-        </Button>
-      </Space>
+  <Drawer
+    :title="drawerTitle"
+    class="w-[1200px]"
+    content-class="flex min-h-0 flex-col overflow-hidden"
+  >
+    <MemberJoinModal ref="joinModalRef" @success="onJoinSuccess" />
+    <div ref="gridWrapRef" class="flex min-h-0 flex-1 flex-col">
+      <MemberGrid>
+        <template #toolbar-tools>
+          <Button type="primary" @click="onJoin">
+            <Plus class="size-5" />
+            {{ $t('jx3.team.join') }}
+          </Button>
+        </template>
+        <template #member-account="{ row }">
+          <div class="member-copy-cell">
+            <span class="truncate">{{ row.account ?? '—' }}</span>
+            <button
+              v-if="row.account"
+              type="button"
+              class="member-copy-btn"
+              :title="$t('ui.jsonViewer.copy')"
+              @click="copyText(row.account)"
+            >
+              <Copy class="size-4" />
+            </button>
+          </div>
+        </template>
+        <template #member-password="{ row }">
+          <div class="member-copy-cell">
+            <span class="truncate">{{ row.password ?? '—' }}</span>
+            <button
+              v-if="row.password"
+              type="button"
+              class="member-copy-btn"
+              :title="$t('ui.jsonViewer.copy')"
+              @click="copyText(row.password)"
+            >
+              <Copy class="size-4" />
+            </button>
+          </div>
+        </template>
+      </MemberGrid>
     </div>
   </Drawer>
 </template>
+
+<style scoped>
+.member-copy-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.member-copy-btn {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: hsl(var(--primary));
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.member-copy-btn:hover {
+  background: hsl(var(--primary) / 0.1);
+}
+</style>

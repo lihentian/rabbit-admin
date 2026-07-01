@@ -25,6 +25,7 @@ export namespace Jx3TeamApi {
   }
 
   export interface TeamMember {
+    account?: string;
     characterId: string;
     characterName?: string;
     characterSpecId?: string;
@@ -32,12 +33,15 @@ export namespace Jx3TeamApi {
     coversBigIron?: number;
     coversSmallIron?: number;
     coversTeam?: number;
+    gameArea?: string;
     joinSort?: null | number;
     joinTime?: string;
     joinType?: number;
+    password?: string;
     position?: string;
     sectId?: string;
     sectName?: string;
+    serverName?: null | string;
     specAlias?: string;
   }
 
@@ -207,8 +211,8 @@ async function getTeamMemberAccount(teamId: string, characterId: string) {
 }
 
 async function completeTeam(teamId: string, force?: boolean) {
-  return requestClient.post(`/jx3/teams/${teamId}/complete`, null, {
-    params: force ? { force: 1 } : undefined,
+  return requestClient.post(`/jx3/teams/${teamId}/complete`, {
+    force: !!force,
   });
 }
 

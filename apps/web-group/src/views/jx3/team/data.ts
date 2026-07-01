@@ -161,6 +161,11 @@ export function useColumns(onActionClick: OnActionClickFn<Jx3TeamApi.Team>): Vxe
         options: [
           { code: 'config', text: $t('jx3.team.config') },
           { code: 'members', text: $t('jx3.team.members') },
+          {
+            code: 'complete',
+            show: (row: Jx3TeamApi.Team) => row.status !== 3,
+            text: $t('jx3.team.complete'),
+          },
           'edit',
           'delete',
         ],
@@ -168,7 +173,7 @@ export function useColumns(onActionClick: OnActionClickFn<Jx3TeamApi.Team>): Vxe
       field: 'operation',
       fixed: 'right',
       title: $t('jx3.team.operation'),
-      width: 240,
+      width: 280,
     },
   ];
 }
@@ -177,6 +182,30 @@ export function useMemberColumns(
   onLeave: (row: Jx3TeamApi.TeamMember) => void,
 ): VxeTableGridColumns {
   return [
+    {
+      align: 'left',
+      field: 'account',
+      slots: { default: 'member-account' },
+      title: $t('jx3.account.name'),
+      width: 240,
+    },
+    {
+      align: 'left',
+      field: 'password',
+      slots: { default: 'member-password' },
+      title: $t('jx3.account.password'),
+      width: 150,
+    },
+    {
+      align: 'left',
+      field: 'serverName',
+      formatter: ({ row }) => {
+        const parts = [row.gameArea, row.serverName || '—'].filter(Boolean);
+        return parts.length ? parts.join(' · ') : '—';
+      },
+      title: $t('jx3.team.gameServer'),
+      minWidth: 160,
+    },
     {
       field: 'characterName',
       title: $t('jx3.team.characterId'),
@@ -269,6 +298,17 @@ export function useJoinFormSchema(isOpen = false): VbenFormSchema[] {
             params: { characterId: values.characterId },
             shouldFetch: (params: Record<string, any>) => !!params?.characterId,
           };
+        },
+        async trigger(values, _formApi, controller) {
+          const characterId = values.characterId;
+          if (!characterId) {
+            if (values.characterSpecId != null && values.characterSpecId !== '') {
+              await controller.setFieldValue('characterSpecId', undefined, false);
+            }
+            return;
+          }
+          const specs = await getCharacterSpecOptions({ characterId });
+          await controller.setFieldValue('characterSpecId', specs[0]?.value, false);
         },
         triggerFields: ['characterId'],
       },
