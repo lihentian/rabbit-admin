@@ -1,5 +1,9 @@
 import type { VbenFormSchema } from '#/adapter/form';
-import type { OnActionClickFn, OnActionClickParams, VxeTableGridColumns } from '#/adapter/vxe-table';
+import type {
+  OnActionClickFn,
+  OnActionClickParams,
+  VxeTableGridColumns,
+} from '#/adapter/vxe-table';
 import type { Jx3CharacterApi } from '#/api/jx3/character';
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
@@ -111,9 +115,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-export function useColumns(
-  onActionClick: OnActionClickFn<Jx3TeamApi.Team>,
-): VxeTableGridColumns {
+export function useColumns(onActionClick: OnActionClickFn<Jx3TeamApi.Team>): VxeTableGridColumns {
   return [
     { field: 'teamName', title: $t('jx3.team.teamName'), width: 140 },
     { field: 'dungeonName', title: $t('jx3.team.dungeonId'), width: 120 },
@@ -154,18 +156,19 @@ export function useColumns(
           nameField: 'teamName',
           nameTitle: $t('jx3.team.name'),
           onClick: onActionClick,
-          options: [
-            { code: 'members', text: $t('jx3.team.members') },
-            'edit',
-            'delete',
-          ],
         },
         name: 'CellOperation',
+        options: [
+          { code: 'config', text: $t('jx3.team.config') },
+          { code: 'members', text: $t('jx3.team.members') },
+          'edit',
+          'delete',
+        ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('jx3.team.operation'),
-      width: 200,
+      width: 240,
     },
   ];
 }
@@ -187,31 +190,26 @@ export function useMemberColumns(
     },
     {
       field: 'coversSmallIron',
-      formatter: ({ cellValue }) =>
-        cellValue ? $t('common.yes') : $t('common.no'),
+      formatter: ({ cellValue }) => (cellValue ? $t('common.yes') : $t('common.no')),
       title: $t('jx3.team.coversSmallIron'),
       width: 90,
     },
     {
       field: 'coversBigIron',
-      formatter: ({ cellValue }) =>
-        cellValue ? $t('common.yes') : $t('common.no'),
+      formatter: ({ cellValue }) => (cellValue ? $t('common.yes') : $t('common.no')),
       title: $t('jx3.team.coversBigIron'),
       width: 90,
     },
     {
       field: 'coversTeam',
-      formatter: ({ cellValue }) =>
-        cellValue ? $t('common.yes') : $t('common.no'),
+      formatter: ({ cellValue }) => (cellValue ? $t('common.yes') : $t('common.no')),
       title: $t('jx3.team.coversTeam'),
       width: 90,
     },
     {
       field: 'joinType',
       formatter: ({ cellValue }) => {
-        const option = useJoinTypeOptions().find(
-          (item) => item.value === cellValue,
-        );
+        const option = useJoinTypeOptions().find((item) => item.value === cellValue);
         return option?.label ?? cellValue;
       },
       title: $t('jx3.team.joinType'),
@@ -229,9 +227,9 @@ export function useMemberColumns(
               onLeave(row);
             }
           },
-          options: [{ code: 'leave', text: $t('jx3.team.leaveTeam') }],
         },
         name: 'CellOperation',
+        options: [{ code: 'leave', text: $t('jx3.team.leaveTeam') }],
       },
       field: 'operation',
       fixed: 'right',
@@ -269,8 +267,7 @@ export function useJoinFormSchema(isOpen = false): VbenFormSchema[] {
           return {
             api: getCharacterSpecOptions,
             params: { characterId: values.characterId },
-            shouldFetch: (params: Record<string, any>) =>
-              !!params?.characterId,
+            shouldFetch: (params: Record<string, any>) => !!params?.characterId,
           };
         },
         triggerFields: ['characterId'],

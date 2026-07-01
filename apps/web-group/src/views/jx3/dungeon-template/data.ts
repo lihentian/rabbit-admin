@@ -74,18 +74,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-function formatSpecRules(row: Jx3DungeonTemplateApi.Template) {
-  const rules = row.specRules;
-  if (!rules?.length) return '-';
-  return rules
-    .map((item) => {
-      const name = item.specAlias ?? item.specId;
-      const cw = item.isCw ? $t('jx3.dungeonTemplate.isCwShort') : '';
-      return `${name}×${item.count}${cw}`;
-    })
-    .join('、');
-}
-
 export function useColumns(
   onActionClick: OnActionClickFn<Jx3DungeonTemplateApi.Template>,
 ): VxeTableGridColumns {
@@ -119,9 +107,9 @@ export function useColumns(
     },
     {
       field: 'specRules',
-      formatter: ({ row }) => formatSpecRules(row),
       minWidth: 200,
-      showOverflow: 'tooltip',
+      showOverflow: false,
+      slots: { default: 'specRules' },
       title: $t('jx3.dungeonTemplate.specRules'),
     },
     {

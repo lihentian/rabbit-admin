@@ -8,6 +8,7 @@ export namespace Jx3AccountApi {
     account: string;
     id: string;
     password?: string;
+    remark?: null | string;
     serviceId: string;
     userId: string;
   }

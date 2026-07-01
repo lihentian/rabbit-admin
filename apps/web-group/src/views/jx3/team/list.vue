@@ -6,6 +6,7 @@ import type {
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
@@ -20,6 +21,7 @@ import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 import MemberDrawer from './modules/member-drawer.vue';
 
+const router = useRouter();
 const memberDrawerRef = ref<InstanceType<typeof MemberDrawer>>();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -33,6 +35,16 @@ function onEdit(row: Jx3TeamApi.Team) {
 
 function onCreate() {
   formDrawerApi.setData(null).open();
+}
+
+function onConfig(row: Jx3TeamApi.Team) {
+  router.push({
+    name: 'Jx3TeamConfig',
+    query: {
+      teamId: row.id,
+      title: `${$t('jx3.team.config')} - ${row.teamName}`,
+    },
+  });
 }
 
 function onMembers(row: Jx3TeamApi.Team) {
@@ -66,6 +78,10 @@ function onActionClick({ code, row }: OnActionClickParams<Jx3TeamApi.Team>) {
     }
     case 'edit': {
       onEdit(row);
+      break;
+    }
+    case 'config': {
+      onConfig(row);
       break;
     }
     case 'members': {

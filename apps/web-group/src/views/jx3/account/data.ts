@@ -42,6 +42,11 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
         triggerFields: [],
       },
     },
+    {
+      component: 'Input',
+      fieldName: 'remark',
+      label: $t('jx3.account.remark'),
+    },
   ];
 }
 
@@ -99,6 +104,7 @@ export function useColumns(
     { field: 'account', title: $t('jx3.account.account'), minWidth: 140 },
     { field: 'userId', title: $t('jx3.account.userId'), minWidth: 120 },
     { field: 'serviceId', title: $t('jx3.account.serviceId'), minWidth: 120 },
+    { field: 'remark', title: $t('jx3.account.remark'), minWidth: 120 },
     {
       align: 'center',
       cellRender: {

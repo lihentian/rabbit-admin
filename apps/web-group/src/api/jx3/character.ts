@@ -16,18 +16,9 @@ export namespace Jx3CharacterApi {
     characterId?: string;
     combatPower: number;
     id: string;
+    isCw?: boolean | number;
     specId: string;
     specAlias?: string;
-  }
-
-  export interface DungeonCd {
-    cdStatus: number;
-    characterId?: string;
-    dungeonId?: string;
-    dungeonName?: string;
-    id: string;
-    lastUsedTime?: string;
-    refreshTime?: string;
   }
 }
 
@@ -91,18 +82,11 @@ async function deleteCharacterSpec(
   );
 }
 
-async function getCharacterCds(characterId: string) {
-  return requestClient.get<Jx3CharacterApi.DungeonCd[]>(
-    `/jx3/characters/${characterId}/cds`,
-  );
-}
-
 export {
   createCharacter,
   createCharacterSpec,
   deleteCharacter,
   deleteCharacterSpec,
-  getCharacterCds,
   getCharacterForm,
   getCharacterList,
   getCharacterSpecs,

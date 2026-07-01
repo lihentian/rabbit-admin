@@ -80,10 +80,28 @@ const routes: RouteRecordRaw[] = [
         path: 'team',
         name: 'Jx3Team',
         meta: {
+          hideChildrenInMenu: true,
           icon: 'mdi:account-group',
           title: $t('jx3.team.title'),
         },
-        component: () => import('#/views/jx3/team/list.vue'),
+        children: [
+          {
+            path: '',
+            name: 'Jx3TeamList',
+            meta: {
+              title: $t('jx3.team.list'),
+            },
+            component: () => import('#/views/jx3/team/list.vue'),
+          },
+          {
+            path: 'config',
+            name: 'Jx3TeamConfig',
+            meta: {
+              title: $t('jx3.team.config'),
+            },
+            component: () => import('#/views/jx3/team/config.vue'),
+          },
+        ],
       },
     ],
   },

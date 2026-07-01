@@ -107,6 +107,12 @@ export function useSpecFormSchema(): VbenFormSchema[] {
       label: $t('jx3.character.combatPower'),
       rules: 'required',
     },
+    {
+      component: 'Switch',
+      defaultValue: false,
+      fieldName: 'isCw',
+      label: $t('jx3.dungeonTemplate.isCw'),
+    },
   ];
 }
 
@@ -179,6 +185,17 @@ export function useSpecColumns(
       minWidth: 120,
     },
     {
+      cellRender: {
+        name: 'CellTag',
+        options: [
+          { color: 'warning', label: $t('jx3.dungeonTemplate.isCwShort'), value: 1 },
+        ],
+      },
+      field: 'isCw',
+      title: $t('jx3.dungeonTemplate.isCw'),
+      width: 90,
+    },
+    {
       align: 'center',
       cellRender: {
         attrs: {
@@ -192,32 +209,6 @@ export function useSpecColumns(
       fixed: 'right',
       title: $t('jx3.character.operation'),
       width: 130,
-    },
-  ];
-}
-
-export function useCdColumns(): VxeTableGridColumns {
-  return [
-    {
-      cellRender: { name: 'CellTag' },
-      field: 'cdStatus',
-      title: $t('jx3.character.cdStatus'),
-      width: 100,
-    },
-    {
-      field: 'dungeonName',
-      title: $t('jx3.character.dungeonName'),
-      minWidth: 140,
-    },
-    {
-      field: 'lastUsedTime',
-      title: $t('jx3.character.lastUsedTime'),
-      width: 170,
-    },
-    {
-      field: 'refreshTime',
-      title: $t('jx3.character.refreshTime'),
-      width: 170,
     },
   ];
 }

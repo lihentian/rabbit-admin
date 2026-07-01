@@ -15,6 +15,15 @@ export namespace Jx3SpecApi {
     specIcon?: null | string;
     specName: string;
   }
+
+  export interface SpecOption {
+    label: string;
+    position: string;
+    sectName: string;
+    specAlias: string;
+    specIcon?: null | string;
+    value: string;
+  }
 }
 
 async function getSpecList(params: Recordable<any>) {
@@ -42,9 +51,9 @@ async function deleteSpec(ids: string | string[]) {
 }
 
 async function getSpecOptions(position?: string) {
-  return requestClient.get<
-    Array<{ label: string; position: string; sectName: string; value: string }>
-  >('/jx3/specs/options', { params: { position } });
+  return requestClient.get<Jx3SpecApi.SpecOption[]>('/jx3/specs/options', {
+    params: { position },
+  });
 }
 
 export { createSpec, deleteSpec, getSpecForm, getSpecList, getSpecOptions, updateSpec };

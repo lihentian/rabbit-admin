@@ -19,6 +19,7 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import SpecRulesCell from './modules/spec-rules-cell.vue';
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
@@ -98,6 +99,10 @@ function refreshGrid() {
   <Page auto-content-height>
     <FormModal @success="refreshGrid" />
     <Grid :table-title="$t('jx3.dungeonTemplate.list')">
+      <template #specRules="{ row }">
+        <SpecRulesCell v-if="row.specRules?.length" :rules="row.specRules" />
+        <span v-else class="text-muted-foreground">-</span>
+      </template>
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
