@@ -110,13 +110,19 @@ function onPointerDown(event: PointerEvent) {
         'pointer-events-none': inactive,
         'member-card--overlay': overlay && !dragging,
         'member-card--dragging': dragging,
-        'member-card--cd-conflict': cdConflict && !overlay && !dragging,
         'cursor-default': inactive,
         'cursor-grab active:cursor-grabbing': !inactive,
       }"
       :title="cdConflictMessage"
       @pointerdown="onPointerDown"
     >
+      <span
+        v-if="cdConflict"
+        class="member-card-cd pointer-events-none absolute right-1 top-1 z-10 select-none"
+        aria-hidden="true"
+      >
+        CD
+      </span>
       <div
         v-if="coverBadges.length"
         class="member-card-badges pointer-events-none absolute bottom-0.5 right-1 z-10 flex items-center gap-0.5"
@@ -124,7 +130,7 @@ function onPointerDown(event: PointerEvent) {
         <CoverBadge v-for="badge in coverBadges" :key="badge" :label="badge" size="card" />
       </div>
       <div
-        class="member-card-icon-col pointer-events-none absolute bottom-1 left-1 top-1 z-10 flex w-7 flex-col items-center justify-between"
+        class="member-card-icon-col pointer-events-none absolute bottom-2 left-1 top-1 z-10 flex w-7 flex-col items-center justify-between"
       >
         <div class="member-card-icon shrink-0">
           <img
@@ -139,15 +145,8 @@ function onPointerDown(event: PointerEvent) {
           </span>
         </div>
         <span v-if="character.isCw" class="member-card-cw select-none" aria-hidden="true">橙</span>
-        <span
-          v-if="cdConflict && !overlay && !dragging"
-          class="member-card-cd select-none"
-          aria-hidden="true"
-        >
-          CD
-        </span>
       </div>
-      <div class="min-w-0 flex-1 select-none pl-9 pt-0.2">
+      <div class="min-w-0 flex-1 select-none pl-9 pt-0.2" :class="{ 'pr-6': cdConflict }">
         <div class="member-card-text truncate text-[16px] font-semibold leading-tight">
           {{ character.characterName }}
         </div>
@@ -195,16 +194,16 @@ function onPointerDown(event: PointerEvent) {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 
-.member-card--cd-conflict {
-  box-shadow: inset 0 0 0 2px rgba(251, 146, 60, 0.95);
-}
-
 .member-card-cd {
-  font-size: 10px;
+  padding: 1px 4px;
+  font-size: 9px;
   font-weight: 800;
-  line-height: 1;
-  color: #fb923c;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.85);
+  line-height: 1.2;
+  color: #fff;
+  background: rgb(239 68 68 / 88%);
+  border: 1px solid rgb(254 202 202 / 75%);
+  border-radius: 2px;
+  text-shadow: 0 1px 1px rgb(127 29 29 / 85%);
 }
 
 .member-card-text {
@@ -235,10 +234,9 @@ function onPointerDown(event: PointerEvent) {
 }
 
 .member-card-cw {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0.02em;
   background: linear-gradient(
     165deg,
     #fff8dc 0%,

@@ -175,6 +175,8 @@
     "forceComplete": "强制通关",
     "characterId": "角色",
     "poolPositionAll": "全部",
+    "poolFilterCd": "CD",
+    "poolFilterCw": "CW",
     "poolSpecFilter": "心法",
     "poolSearchPlaceholder": "搜索角色/区服/备注",
     "poolSearchEmpty": "无匹配角色",
@@ -197,6 +199,9 @@
     "confirmComplete": "确认通关该团队？",
     "completeConfirm": "确认通关该团队？",
     "forceCompleteConfirm": "团队未满，确认强制通关？",
-    "confirmForceComplete": "团队未满，确认强制通关？"
+    "confirmForceComplete": "团队未满，确认强制通关？",
+    "switchTeam": "切换团队",
+    "selectTeam": "选择团队",
+    "noActiveTeam": "暂无可用团队，请先创建"
   }
 }

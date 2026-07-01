@@ -11,7 +11,9 @@ import { $t } from '#/locales';
 
 import { useFormSchema } from '../data';
 
-const emits = defineEmits(['success']);
+const emits = defineEmits<{
+  success: [payload?: { id: string; teamName: string }];
+}>();
 
 const id = ref<string>();
 
@@ -29,10 +31,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
     try {
       if (id.value) {
         await updateTeam(id.value, values);
+        emits('success');
       } else {
-        await createTeam(values);
+        const newId = await createTeam(values);
+        emits('success', {
+          id: newId,
+          teamName: String(values.teamName ?? ''),
+        });
       }
-      emits('success');
       drawerApi.close();
     } finally {
       drawerApi.unlock();

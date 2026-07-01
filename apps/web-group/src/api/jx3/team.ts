@@ -137,7 +137,7 @@ async function getTeamForm(id: string) {
 }
 
 async function createTeam(data: Recordable<any>) {
-  return requestClient.post('/jx3/teams', data);
+  return requestClient.post<string>('/jx3/teams', data);
 }
 
 async function updateTeam(id: string, data: Recordable<any>) {

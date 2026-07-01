@@ -175,6 +175,8 @@
     "forceComplete": "Force Complete",
     "characterId": "Character",
     "poolPositionAll": "All",
+    "poolFilterCd": "CD",
+    "poolFilterCw": "CW",
     "poolSpecFilter": "Spec",
     "poolSearchPlaceholder": "Search name/server/remark",
     "poolSearchEmpty": "No matches",
@@ -197,6 +199,9 @@
     "confirmComplete": "Confirm complete this team?",
     "completeConfirm": "Confirm complete this team?",
     "forceCompleteConfirm": "Team not full, force complete?",
-    "confirmForceComplete": "Team not full, force complete?"
+    "confirmForceComplete": "Team not full, force complete?",
+    "switchTeam": "Switch team",
+    "selectTeam": "Select team",
+    "noActiveTeam": "No active teams, create one first"
   }
 }

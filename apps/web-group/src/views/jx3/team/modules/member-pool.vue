@@ -3,12 +3,15 @@ import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { computed, onMounted, ref, watch } from 'vue';
 
+import { useLocalStorage } from '@vueuse/core';
 import { Input } from 'antdv-next';
 
 import { getSpecOptions } from '#/api/jx3/spec';
 import { $t } from '#/locales';
 
+import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
 import { POOL_CARD_MIN_WIDTH } from './member-card.constants';
+
 import MemberCard from './member-card.vue';
 
 type PositionFilter = 'all' | 'd' | 'n' | 't';
@@ -20,7 +23,8 @@ interface SpecFilterOption {
   specId: string;
 }
 
-import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
+const POOL_ATTR_FILTER_CD_KEY = 'jx3-team-pool-filter-cd';
+const POOL_ATTR_FILTER_CW_KEY = 'jx3-team-pool-filter-cw';
 
 const props = defineProps<{
   characters: Jx3TeamApi.AvailableCharacter[];
@@ -43,6 +47,8 @@ const poolCardFlexBasis = `${POOL_CARD_MIN_WIDTH}px`;
 
 const positionFilter = ref<PositionFilter>('all');
 const specFilterId = ref<null | string>(null);
+const filterCd = useLocalStorage(POOL_ATTR_FILTER_CD_KEY, true);
+const filterCw = useLocalStorage(POOL_ATTR_FILTER_CW_KEY, false);
 const allSpecOptions = ref<SpecFilterOption[]>([]);
 const searchKeyword = ref('');
 
@@ -125,6 +131,12 @@ const filteredPoolCharacters = computed(() => {
       if (specFilterId.value && item.specId !== specFilterId.value) {
         return false;
       }
+      if (filterCd.value && resolveCdConflict(item)) {
+        return false;
+      }
+      if (filterCw.value && !item.isCw) {
+        return false;
+      }
       if (!keyword) return true;
       return (
         item.characterName.toLowerCase().includes(keyword) ||
@@ -169,18 +181,44 @@ function resolveCdConflictMessage(item: Jx3TeamApi.AvailableCharacter) {
   if (!props.teamContext) return undefined;
   return getCdConflictMessage(item, props.teamContext);
 }
+
+function poolAttrFilterBtnClass(active: boolean) {
+  return active
+    ? 'border-primary bg-primary/10 text-primary'
+    : 'border-border/70 text-muted-foreground hover:border-primary/40';
+}
 </script>
 
 <template>
   <div class="flex h-full min-h-0 w-full min-w-0 flex-col">
     <div class="mb-2 shrink-0 space-y-2">
       <!-- <div class="text-sm font-medium">{{ $t('jx3.team.characterId') }}</div> -->
-      <Input
-        v-model:value="searchKeyword"
-        allow-clear
-        class="w-full"
-        :placeholder="$t('jx3.team.poolSearchPlaceholder')"
-      />
+      <div class="flex items-center gap-2">
+        <Input
+          v-model:value="searchKeyword"
+          allow-clear
+          class="min-w-0 flex-1"
+          :placeholder="$t('jx3.team.poolSearchPlaceholder')"
+        />
+        <div class="flex shrink-0 gap-1">
+          <button
+            type="button"
+            class="pool-attr-filter-btn flex size-8 items-center justify-center rounded border text-xs font-medium transition-colors"
+            :class="poolAttrFilterBtnClass(filterCd)"
+            @click="filterCd = !filterCd"
+          >
+            {{ $t('jx3.team.poolFilterCd') }}
+          </button>
+          <button
+            type="button"
+            class="pool-attr-filter-btn flex size-8 items-center justify-center rounded border text-xs font-medium transition-colors"
+            :class="poolAttrFilterBtnClass(filterCw)"
+            @click="filterCw = !filterCw"
+          >
+            {{ $t('jx3.team.poolFilterCw') }}
+          </button>
+        </div>
+      </div>
       <div v-if="specFilterOptions.length" class="space-y-1">
         <!-- <div class="text-xs text-muted-foreground">{{ $t('jx3.team.poolSpecFilter') }}</div> -->
         <div class="grid grid-cols-[repeat(auto-fill,2rem)]">

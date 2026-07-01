@@ -42,7 +42,6 @@ function onConfig(row: Jx3TeamApi.Team) {
     name: 'Jx3TeamConfig',
     query: {
       teamId: row.id,
-      title: `${$t('jx3.team.config')} - ${row.teamName}`,
     },
   });
 }

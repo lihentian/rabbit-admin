@@ -6,8 +6,9 @@ import type { Jx3TeamApi } from '#/api/jx3/team';
 import { computed, h, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { Page } from '@vben/common-ui';
+import { Page, useVbenDrawer } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
+import { Plus } from '@vben/icons';
 
 import { Button, message, Modal } from 'antdv-next';
 
@@ -20,11 +21,13 @@ import {
 } from '#/api/jx3/team';
 import { $t } from '#/locales';
 
+import Form from './modules/form.vue';
 import MemberAccountModal from './modules/member-account-modal.vue';
 import { POOL_CARD_MIN_WIDTH, POOL_PANEL_MIN_WIDTH, SQUAD_COLUMN_MAX_WIDTH } from './modules/member-card.constants';
 import MemberCard from './modules/member-card.vue';
 import MemberPool from './modules/member-pool.vue';
 import MemberSlotGrid from './modules/member-slot-grid.vue';
+import TeamSwitcher from './modules/team-switcher.vue';
 import {
   getLayoutIssueLabelWidth,
   renderLayoutIssue,
@@ -44,17 +47,6 @@ const router = useRouter();
 const { setTabTitle } = useTabs();
 
 const teamId = computed(() => String(route.query.teamId ?? ''));
-const pageTitle = computed(() =>
-  String(route.query.title ?? $t('jx3.team.config')),
-);
-
-watch(
-  pageTitle,
-  (title) => {
-    setTabTitle(title);
-  },
-  { immediate: true },
-);
 
 const teamRow = ref<Jx3TeamApi.Team>();
 const available = ref<Jx3TeamApi.AvailableCharacter[]>([]);
@@ -63,7 +55,19 @@ const dragging = ref<DragPayload | null>(null);
 const dropTargetJoinSort = ref<number>();
 const loading = ref(false);
 const saving = ref(false);
+const teamsLoaded = ref(false);
+const hasActiveTeams = ref(false);
 const accountModalRef = ref<InstanceType<typeof MemberAccountModal>>();
+const teamSwitcherRef = ref<InstanceType<typeof TeamSwitcher>>();
+
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  connectedComponent: Form,
+  destroyOnClose: true,
+});
+
+const showEmpty = computed(
+  () => teamsLoaded.value && !teamId.value && !hasActiveTeams.value,
+);
 
 const readonly = computed(() => teamRow.value?.status === 3);
 const columnCount = computed(() => (teamRow.value?.playerCount === 10 ? 2 : 5));
@@ -173,6 +177,7 @@ async function loadData() {
       getTeamAvailableCharacters(teamId.value),
     ]);
     teamRow.value = team;
+    updateTabTitle(team.teamName);
     available.value = chars;
     resetSlots(team.playerCount);
 
@@ -458,6 +463,51 @@ async function onSave() {
   await saveLayout(layoutSlots);
 }
 
+function updateTabTitle(teamName?: string) {
+  const title = teamName
+    ? `${$t('jx3.team.config')} - ${teamName}`
+    : $t('jx3.team.config');
+  setTabTitle(title);
+}
+
+function navigateToTeam(id: string, teamName?: string) {
+  if (teamName) {
+    updateTabTitle(teamName);
+  }
+  router.replace({
+    path: route.path,
+    query: { teamId: id },
+  });
+}
+
+function onCreate() {
+  formDrawerApi.setData(null).open();
+}
+
+function onFormSuccess(payload?: { id: string; teamName: string }) {
+  teamSwitcherRef.value?.refresh();
+  if (payload?.id) {
+    navigateToTeam(payload.id, payload.teamName);
+    return;
+  }
+  loadData();
+}
+
+function onTeamSwitch(id: string) {
+  if (!id || id === teamId.value) return;
+  navigateToTeam(id);
+}
+
+function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
+  teamsLoaded.value = true;
+  hasActiveTeams.value = teams.length > 0;
+  if (!teamId.value && teams.length > 0) {
+    navigateToTeam(teams[0]!.id, teams[0]!.teamName);
+  } else if (!teamId.value) {
+    updateTabTitle();
+  }
+}
+
 function onBack() {
   router.push({ name: 'Jx3TeamList' });
 }
@@ -465,17 +515,42 @@ function onBack() {
 </script>
 
 <template>
-  <Page auto-content-height :title="pageTitle">
+  <Page auto-content-height>
+    <template #title>
+      <TeamSwitcher
+        ref="teamSwitcherRef"
+        :model-value="teamId"
+        @teams-loaded="onTeamsLoaded"
+        @update:model-value="onTeamSwitch"
+      />
+    </template>
     <template #extra>
       <div class="flex items-center gap-2">
+        <Button type="primary" @click="onCreate">
+          <Plus class="size-5" />
+          {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
+        </Button>
         <Button @click="onBack">{{ $t('common.back') }}</Button>
-        <Button :disabled="readonly" :loading="saving" type="primary" @click="onSave">
+        <Button
+          :disabled="readonly || !teamId"
+          :loading="saving"
+          type="primary"
+          @click="onSave"
+        >
           {{ $t('jx3.team.saveLayout') }}
         </Button>
       </div>
     </template>
 
-    <div class="flex h-full min-h-0 flex-col gap-4">
+    <div v-if="showEmpty" class="flex h-full flex-col items-center justify-center gap-4">
+      <p class="text-muted-foreground">{{ $t('jx3.team.noActiveTeam') }}</p>
+      <Button type="primary" @click="onCreate">
+        <Plus class="size-5" />
+        {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
+      </Button>
+    </div>
+
+    <div v-else-if="teamId" class="flex h-full min-h-0 flex-col gap-4">
       <div v-if="readonly" class="shrink-0 text-sm text-amber-500">
         {{ $t('jx3.team.layoutReadonly') }}
       </div>
@@ -539,5 +614,6 @@ function onBack() {
     </Teleport>
 
     <MemberAccountModal ref="accountModalRef" />
+    <FormDrawer @success="onFormSuccess" />
   </Page>
 </template>
