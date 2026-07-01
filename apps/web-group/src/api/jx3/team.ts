@@ -45,43 +45,44 @@ export namespace Jx3TeamApi {
     specAlias?: string;
   }
 
-  export interface AvailableCharacterSpec {
-    characterSpecId: string;
-    combatPower: number;
-    isCw?: boolean;
+  export interface AvailableCharacterSpecMeta {
     position?: string;
     sectId?: string;
     sectName?: string;
     specAlias?: string;
     specIcon?: null | string;
+  }
+
+  export type AvailableCharacterSpecDict = Record<string, AvailableCharacterSpecMeta>;
+
+  export interface AvailableCharacterSpecSlim {
+    characterSpecId: string;
+    combatPower: number;
+    isCw?: boolean;
     specId: string;
   }
 
-  export interface CharacterActiveTeam {
-    cdLimitEnabled: boolean;
-    dungeonId: string;
-    status: number;
-    teamId: string;
-    teamName: string;
-  }
-
-  export interface AvailableCharacter {
+  export interface AvailableCharacterSlim {
     accountRemark?: null | string;
-    activeTeams?: CharacterActiveTeam[];
+    cdConflict?: string;
     characterId: string;
     characterName: string;
     characterSpecId: string;
     combatPower: number;
-    inTeam: boolean;
     isCw?: boolean;
-    position?: string;
-    sectId?: string;
-    sectName?: string;
     serverName?: string;
-    specAlias?: string;
-    specIcon?: null | string;
     specId: string;
-    specs: AvailableCharacterSpec[];
+    specs: AvailableCharacterSpecSlim[];
+  }
+
+  /** 角色池卡片展示（由 slim + specDict 派生） */
+  export interface AvailableCharacter
+    extends AvailableCharacterSlim,
+      AvailableCharacterSpecMeta {}
+
+  export interface AvailableCharactersResult {
+    characters: AvailableCharacterSlim[];
+    specDict: AvailableCharacterSpecDict;
   }
 
   export interface LayoutSlot {
@@ -160,7 +161,7 @@ async function getTeamMembers(teamId: string) {
 }
 
 async function getTeamAvailableCharacters(teamId: string) {
-  return requestClient.get<Jx3TeamApi.AvailableCharacter[]>(
+  return requestClient.get<Jx3TeamApi.AvailableCharactersResult>(
     `/jx3/teams/${teamId}/available-characters`,
   );
 }

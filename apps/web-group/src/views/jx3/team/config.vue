@@ -32,6 +32,9 @@ import {
   getLayoutIssueLabelWidth,
   renderLayoutIssue,
 } from './utils/layout-composition-issue';
+import {
+  getSpecMeta,
+} from './utils/enrich-available-character';
 
 interface DragPayload {
   characterId: string;
@@ -49,7 +52,8 @@ const { setTabTitle } = useTabs();
 const teamId = computed(() => String(route.query.teamId ?? ''));
 
 const teamRow = ref<Jx3TeamApi.Team>();
-const available = ref<Jx3TeamApi.AvailableCharacter[]>([]);
+const availableSpecDict = ref<Jx3TeamApi.AvailableCharacterSpecDict>({});
+const available = ref<Jx3TeamApi.AvailableCharacterSlim[]>([]);
 const slots = reactive<Record<number, null | SlotMember>>({});
 const dragging = ref<DragPayload | null>(null);
 const dropTargetJoinSort = ref<number>();
@@ -106,14 +110,16 @@ function resolveDragPreviewCharacter(payload: DragPayload) {
   const spec =
     character.specs.find((s) => s.characterSpecId === payload.characterSpecId) ??
     character.specs[0];
+  const specId = spec?.specId ?? character.specId;
+  const meta = getSpecMeta(availableSpecDict.value, specId);
   return {
     accountRemark: character.accountRemark,
     characterName: character.characterName,
     combatPower: spec?.combatPower ?? character.combatPower,
     isCw: !!(spec?.isCw ?? character.isCw),
     serverName: character.serverName,
-    specAlias: spec?.specAlias ?? character.specAlias,
-    specIcon: spec?.specIcon ?? character.specIcon,
+    specAlias: meta.specAlias,
+    specIcon: meta.specIcon,
   };
 }
 
@@ -141,7 +147,7 @@ function resetSlots(playerCount: number) {
 }
 
 function toSlotMember(
-  char: Jx3TeamApi.AvailableCharacter,
+  char: Jx3TeamApi.AvailableCharacterSlim,
   characterSpecId?: string,
   member?: Pick<
     Jx3TeamApi.TeamMember,
@@ -151,6 +157,8 @@ function toSlotMember(
   const spec =
     char.specs.find((s) => s.characterSpecId === characterSpecId) ??
     char.specs[0];
+  const specId = spec?.specId ?? char.specId;
+  const meta = getSpecMeta(availableSpecDict.value, specId);
   return {
     characterId: char.characterId,
     characterName: char.characterName,
@@ -160,10 +168,10 @@ function toSlotMember(
     coversBigIron: !!member?.coversBigIron,
     coversTeam: !!member?.coversTeam,
     isCw: !!(spec?.isCw ?? char.isCw),
-    sectId: spec?.sectId ?? char.sectId,
+    sectId: meta.sectId,
     serverName: char.serverName,
-    specAlias: spec?.specAlias ?? char.specAlias,
-    specIcon: spec?.specIcon ?? char.specIcon,
+    specAlias: meta.specAlias,
+    specIcon: meta.specIcon,
   };
 }
 
@@ -171,17 +179,18 @@ async function loadData() {
   if (!teamId.value) return;
   loading.value = true;
   try {
-    const [team, members, chars] = await Promise.all([
+    const [team, members, pool] = await Promise.all([
       getTeamForm(teamId.value),
       getTeamMembers(teamId.value),
       getTeamAvailableCharacters(teamId.value),
     ]);
     teamRow.value = team;
     updateTabTitle(team.teamName);
-    available.value = chars;
+    availableSpecDict.value = pool.specDict;
+    available.value = pool.characters;
     resetSlots(team.playerCount);
 
-    const charMap = new Map(chars.map((c) => [c.characterId, c]));
+    const charMap = new Map(pool.characters.map((c) => [c.characterId, c]));
     for (const member of members) {
       if (!member.joinSort) continue;
       const char = charMap.get(member.characterId);
@@ -318,7 +327,7 @@ function onSlotPickup(joinSort: number, event: PointerEvent) {
 }
 
 function assignToSlot(
-  character: Jx3TeamApi.AvailableCharacter,
+  character: Jx3TeamApi.AvailableCharacterSlim,
   joinSort: number,
   characterSpecId?: string,
 ) {
@@ -581,6 +590,7 @@ function onBack() {
           :dragging-character-spec-id="dragging?.characterSpecId"
           :dragging-source="dragging?.source"
           :slotted-character-ids="slottedCharacterIds"
+          :spec-dict="availableSpecDict"
           :team-context="
             teamRow
               ? {

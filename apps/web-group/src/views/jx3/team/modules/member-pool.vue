@@ -9,6 +9,7 @@ import { Input } from 'antdv-next';
 import { getSpecOptions } from '#/api/jx3/spec';
 import { $t } from '#/locales';
 
+import { enrichAvailableSpec } from '../utils/enrich-available-character';
 import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
 import {
   POOL_CARD_MIN_WIDTH,
@@ -27,11 +28,12 @@ interface SpecFilterOption {
 }
 
 const props = defineProps<{
-  characters: Jx3TeamApi.AvailableCharacter[];
+  characters: Jx3TeamApi.AvailableCharacterSlim[];
   draggingCharacterId?: string;
   draggingCharacterSpecId?: string;
   draggingSource?: 'pool' | 'slot';
   slottedCharacterIds: Set<string>;
+  specDict: Jx3TeamApi.AvailableCharacterSpecDict;
   teamContext?: {
     cdLimitEnabled: boolean;
     dungeonId: string;
@@ -62,26 +64,22 @@ const positionOptions = computed(() => [
 ]);
 
 function toPoolEntry(
-  char: Jx3TeamApi.AvailableCharacter,
-  spec: Jx3TeamApi.AvailableCharacterSpec,
+  char: Jx3TeamApi.AvailableCharacterSlim,
+  spec: Jx3TeamApi.AvailableCharacterSpecSlim,
 ): Jx3TeamApi.AvailableCharacter {
-  return {
-    ...char,
-    characterSpecId: spec.characterSpecId,
-    combatPower: spec.combatPower,
-    position: spec.position,
-    specAlias: spec.specAlias,
-    specIcon: spec.specIcon,
-    specId: spec.specId,
-    isCw: !!spec.isCw,
-  };
+  return enrichAvailableSpec(char, spec, props.specDict);
 }
 
 const poolCharacters = computed(() => {
   const result: Jx3TeamApi.AvailableCharacter[] = [];
   for (const char of props.characters) {
     if (char.specs.length <= 1) {
-      result.push(char);
+      result.push(enrichAvailableSpec(char, char.specs[0] ?? {
+        characterSpecId: char.characterSpecId,
+        specId: char.specId,
+        combatPower: char.combatPower,
+        isCw: char.isCw,
+      }, props.specDict));
       continue;
     }
     for (const spec of char.specs) {
@@ -213,12 +211,12 @@ function specFilterTitle(spec: SpecFilterOption) {
   return spec.specAlias ?? spec.specId;
 }
 
-function resolveCdConflict(item: Jx3TeamApi.AvailableCharacter) {
+function resolveCdConflict(item: Jx3TeamApi.AvailableCharacterSlim) {
   if (!props.teamContext) return false;
   return hasCdConflict(item, props.teamContext);
 }
 
-function resolveCdConflictMessage(item: Jx3TeamApi.AvailableCharacter) {
+function resolveCdConflictMessage(item: Jx3TeamApi.AvailableCharacterSlim) {
   if (!props.teamContext) return undefined;
   return getCdConflictMessage(item, props.teamContext);
 }
