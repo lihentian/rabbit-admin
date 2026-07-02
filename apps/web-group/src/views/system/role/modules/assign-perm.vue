@@ -14,7 +14,9 @@ import { $t } from '#/locales';
 
 interface MenuTreeNode {
   children?: MenuTreeNode[];
+  key?: number | string;
   label: string;
+  title?: string;
   value: string;
 }
 
@@ -192,6 +194,49 @@ function onSelectAllChange(checked: boolean) {
   checkedKeys.value = checked ? [...allMenuKeys.value] : [];
 }
 
+function getTreeNodeKey(node: Record<string, unknown>): string {
+  const value = node.value ?? node.key;
+  return value == null ? '' : String(value);
+}
+
+function getTreeNodeLabel(node: Record<string, unknown>): string {
+  const label = node.label ?? node.title ?? node.key;
+  return label == null ? '' : String(label);
+}
+
+function hasTreeNodeChildren(node: Record<string, unknown>): boolean {
+  const children = node.children;
+  return Array.isArray(children) && children.length > 0;
+}
+
+function collectNodeWithDescendantKeys(nodeKey: string): string[] {
+  const node = findNodeByKey(menuOptions.value, nodeKey);
+  if (!node) return [nodeKey];
+  return [nodeKey, ...collectDescendantKeys(node)];
+}
+
+function getNodeSelectAllStatus(nodeKey: string): 'indeterminate' | boolean {
+  const keys = collectNodeWithDescendantKeys(nodeKey);
+  const current = new Set(checkedKeys.value.map(String));
+  const selectedCount = keys.filter((key) => current.has(key)).length;
+  if (!selectedCount) return false;
+  if (selectedCount >= keys.length) return true;
+  return 'indeterminate';
+}
+
+function onNodeSelectAllChange(nodeKey: string, checked: boolean) {
+  const keys = collectNodeWithDescendantKeys(nodeKey);
+  const current = new Set(checkedKeys.value.map(String));
+
+  if (checked) {
+    keys.forEach((key) => current.add(key));
+  } else {
+    keys.forEach((key) => current.delete(key));
+  }
+
+  checkedKeys.value = [...current];
+}
+
 watch(permKeywords, (value) => {
   if (value.trim() && !expandedKeys.value.length) {
     expandedKeys.value = collectParentKeys(filteredMenuOptions.value);
@@ -245,12 +290,44 @@ watch(permKeywords, (value) => {
           block-node
           checkable
           check-strictly
-          class="px-1 py-1"
+          class="perm-tree px-1 py-1"
           :field-names="{ title: 'label', key: 'value', children: 'children' }"
           :tree-data="filteredMenuOptions"
           @check="onTreeCheck"
-        />
+        >
+          <template #titleRender="node">
+            <div class="flex w-full min-w-0 items-center justify-between gap-2 pr-1">
+              <span class="min-w-0 flex-1 truncate">{{ getTreeNodeLabel(node) }}</span>
+              <Checkbox
+                v-if="hasTreeNodeChildren(node)"
+                class="perm-tree-select-all shrink-0"
+                :checked="getNodeSelectAllStatus(getTreeNodeKey(node))"
+                :indeterminate="
+                  getNodeSelectAllStatus(getTreeNodeKey(node)) === 'indeterminate'
+                "
+                @click.stop
+                @update:checked="
+                  (checked) => onNodeSelectAllChange(getTreeNodeKey(node), checked)
+                "
+              >
+                {{ $t('system.role.selectAllChildren') }}
+              </Checkbox>
+            </div>
+          </template>
+        </Tree>
       </div>
     </Spin>
   </Drawer>
 </template>
+
+<style scoped>
+.perm-tree :deep(.ant-tree-node-content-wrapper) {
+  flex: 1;
+  min-width: 0;
+}
+
+.perm-tree :deep(.ant-tree-title) {
+  flex: 1;
+  min-width: 0;
+}
+</style>

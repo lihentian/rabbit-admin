@@ -43,7 +43,8 @@
     "expandAll": "展开",
     "collapseAll": "收缩",
     "assignPermCheckTip": "勾选父节点会自动全选其下按钮权限；勾选子节点不会自动勾选父节点，目录需单独勾选",
-    "selectAll": "全部"
+    "selectAll": "全部",
+    "selectAllChildren": "全选"
   },
   "menu": {
     "title": "菜单管理",
