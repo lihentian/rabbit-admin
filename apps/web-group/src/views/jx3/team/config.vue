@@ -35,6 +35,7 @@ import {
 import {
   getSpecMeta,
 } from './utils/enrich-available-character';
+import { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 
 interface DragPayload {
   characterId: string;
@@ -64,6 +65,8 @@ const hasActiveTeams = ref(false);
 const accountModalRef = ref<InstanceType<typeof MemberAccountModal>>();
 const teamSwitcherRef = ref<InstanceType<typeof TeamSwitcher>>();
 
+const { canCreate, canSaveLayout, canUsePool } = useJx3TeamAccess();
+
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
@@ -73,7 +76,10 @@ const showEmpty = computed(
   () => teamsLoaded.value && !teamId.value && !hasActiveTeams.value,
 );
 
-const readonly = computed(() => teamRow.value?.status === 3);
+const layoutReadonly = computed(
+  () => teamRow.value?.status === 3 || !(teamRow.value?.canManageMembers ?? false),
+);
+const readonly = layoutReadonly;
 const columnCount = computed(() => (teamRow.value?.playerCount === 10 ? 2 : 5));
 const slottedCharacterIds = computed(
   () =>
@@ -184,7 +190,10 @@ async function loadData() {
       getTeamMembers(teamId.value),
       getTeamAvailableCharacters(teamId.value),
     ]);
-    teamRow.value = team;
+    teamRow.value = {
+      ...team,
+      canManageMembers: pool.canManageMembers ?? team.canManageMembers ?? false,
+    };
     updateTabTitle(team.teamName);
     availableSpecDict.value = pool.specDict;
     available.value = pool.characters;
@@ -535,12 +544,13 @@ function onBack() {
     </template>
     <template #extra>
       <div class="flex items-center gap-2">
-        <Button type="primary" @click="onCreate">
+        <Button v-if="canCreate" type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
         </Button>
         <Button @click="onBack">{{ $t('common.back') }}</Button>
         <Button
+          v-if="canSaveLayout"
           :disabled="readonly || !teamId"
           :loading="saving"
           type="primary"
@@ -553,7 +563,7 @@ function onBack() {
 
     <div v-if="showEmpty" class="flex h-full flex-col items-center justify-center gap-4">
       <p class="text-muted-foreground">{{ $t('jx3.team.noActiveTeam') }}</p>
-      <Button type="primary" @click="onCreate">
+      <Button v-if="canCreate" type="primary" @click="onCreate">
         <Plus class="size-5" />
         {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
       </Button>
@@ -583,6 +593,7 @@ function onBack() {
           @view-account="onViewAccount"
         />
         <MemberPool
+          v-if="canUsePool"
           class="h-full min-h-0 min-w-0 flex-1"
           :style="{ minWidth: `${POOL_PANEL_MIN_WIDTH}px` }"
           :characters="available"

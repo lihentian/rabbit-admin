@@ -42,8 +42,7 @@
     "permKeywords": "菜单权限名称",
     "expandAll": "展开",
     "collapseAll": "收缩",
-    "parentChildLinked": "父子联动",
-    "parentChildLinkedTip": "如果只需勾选菜单权限，不需要勾选子菜单或者按钮权限，请关闭父子联动",
+    "assignPermCheckTip": "勾选父节点会自动全选其下按钮权限；勾选子节点不会自动勾选父节点，目录需单独勾选",
     "selectAll": "全部"
   },
   "menu": {

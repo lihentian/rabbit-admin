@@ -42,8 +42,7 @@
     "permKeywords": "Menu permission name",
     "expandAll": "Expand",
     "collapseAll": "Collapse",
-    "parentChildLinked": "Parent-child linked",
-    "parentChildLinkedTip": "Disable this if you only need menu permissions without child menus or button permissions",
+    "assignPermCheckTip": "Checking a parent selects all button permissions below it. Checking a child does not select parents; catalog menus must be checked separately.",
     "selectAll": "All"
   },
   "menu": {

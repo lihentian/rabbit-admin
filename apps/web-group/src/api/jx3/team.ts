@@ -7,6 +7,7 @@ import { requestClient } from '#/api/request';
 
 export namespace Jx3TeamApi {
   export interface Team {
+    canManageMembers?: boolean;
     dungeonId: string;
     dungeonName?: string;
     id: string;
@@ -81,6 +82,7 @@ export namespace Jx3TeamApi {
       AvailableCharacterSpecMeta {}
 
   export interface AvailableCharactersResult {
+    canManageMembers?: boolean;
     characters: AvailableCharacterSlim[];
     specDict: AvailableCharacterSpecDict;
   }

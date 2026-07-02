@@ -20,8 +20,10 @@ import { $t } from '#/locales';
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 import MemberDrawer from './modules/member-drawer.vue';
+import { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 
 const router = useRouter();
+const teamAccess = useJx3TeamAccess();
 const memberDrawerRef = ref<InstanceType<typeof MemberDrawer>>();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -153,7 +155,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: true,
   },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(onActionClick, teamAccess),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -189,7 +191,7 @@ function refreshGrid() {
     <MemberDrawer ref="memberDrawerRef" @success="refreshGrid" />
     <Grid :table-title="$t('jx3.team.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button v-if="teamAccess.canCreate.value" type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
         </Button>

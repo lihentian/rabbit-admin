@@ -8,6 +8,7 @@ import type { Jx3CharacterApi } from '#/api/jx3/character';
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { getCharacterList, getCharacterSpecs } from '#/api/jx3/character';
+import type { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 import { getDungeonTemplateOptions } from '#/api/jx3/dungeon-template';
 import { $t } from '#/locales';
 import { useDungeonGroupedSelectProps, usePlayerCountOptions } from '#/views/jx3/dungeon/data';
@@ -115,7 +116,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-export function useColumns(onActionClick: OnActionClickFn<Jx3TeamApi.Team>): VxeTableGridColumns {
+export function useColumns(
+  onActionClick: OnActionClickFn<Jx3TeamApi.Team>,
+  access?: ReturnType<typeof useJx3TeamAccess>,
+): VxeTableGridColumns {
   return [
     { field: 'teamName', title: $t('jx3.team.teamName'), width: 140 },
     { field: 'dungeonName', title: $t('jx3.team.dungeonId'), width: 120 },
@@ -159,15 +163,30 @@ export function useColumns(onActionClick: OnActionClickFn<Jx3TeamApi.Team>): Vxe
         },
         name: 'CellOperation',
         options: [
-          { code: 'config', text: $t('jx3.team.config') },
-          { code: 'members', text: $t('jx3.team.members') },
+          {
+            code: 'config',
+            show: () => access?.canManageMembers.value ?? false,
+            text: $t('jx3.team.config'),
+          },
+          {
+            code: 'members',
+            show: () => access?.canManageMembers.value ?? false,
+            text: $t('jx3.team.members'),
+          },
           {
             code: 'complete',
-            show: (row: Jx3TeamApi.Team) => row.status !== 3,
+            show: (row: Jx3TeamApi.Team) =>
+              row.status !== 3 && (access?.canComplete.value ?? false),
             text: $t('jx3.team.complete'),
           },
-          'edit',
-          'delete',
+          {
+            code: 'edit',
+            show: () => access?.canUpdate.value ?? false,
+          },
+          {
+            code: 'delete',
+            show: () => access?.canDelete.value ?? false,
+          },
         ],
       },
       field: 'operation',

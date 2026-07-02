@@ -106,7 +106,7 @@ function refreshGrid() {
     <FormDrawer @success="refreshGrid" />
     <Grid :table-title="$t('system.user.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button v-access:code="['sys:user:create']" type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
         </Button>

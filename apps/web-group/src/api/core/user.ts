@@ -1,5 +1,7 @@
 import type { UserInfo } from '@vben/types';
 
+import { useAccessStore } from '@vben/stores';
+
 import { requestClient } from '#/api/request';
 
 export namespace UserApi {
@@ -11,6 +13,7 @@ export namespace UserApi {
     id: string;
     mobile?: string;
     nickname: string;
+    perms?: string[];
     roleIds?: string[];
     roleNames?: string[];
     status: number;
@@ -36,5 +39,7 @@ function mapToUserInfo(data: UserApi.MeResult): UserInfo {
  */
 export async function getUserInfoApi() {
   const data = await requestClient.get<UserApi.MeResult>('/users/me');
+  const accessStore = useAccessStore();
+  accessStore.setAccessCodes(data.perms ?? []);
   return mapToUserInfo(data);
 }

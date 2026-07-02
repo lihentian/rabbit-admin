@@ -4,9 +4,9 @@ import type { SystemRoleApi } from '#/api/system/role';
 import { computed, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { CircleHelp, MdiMenuClose, MdiMenuOpen, Search } from '@vben/icons';
+import { MdiMenuClose, MdiMenuOpen, Search } from '@vben/icons';
 
-import { Button, Checkbox, Input, message, Spin, Tooltip, Tree } from 'antdv-next';
+import { Button, Checkbox, Input, message, Spin, Tree } from 'antdv-next';
 
 import { getMenuOptions } from '#/api/system/menu';
 import { getRoleMenuIds, updateRoleMenus } from '#/api/system/role';
@@ -25,7 +25,6 @@ const menuOptions = ref<MenuTreeNode[]>([]);
 const checkedKeys = ref<string[]>([]);
 const expandedKeys = ref<string[]>([]);
 const permKeywords = ref('');
-const parentChildLinked = ref(true);
 const loading = ref(false);
 
 const filteredMenuOptions = computed(() =>
@@ -64,7 +63,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
       checkedKeys.value = [];
       expandedKeys.value = [];
       permKeywords.value = '';
-      parentChildLinked.value = true;
       return;
     }
 
@@ -79,7 +77,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         getRoleMenuIds(data.id),
       ]);
       menuOptions.value = options as MenuTreeNode[];
-      checkedKeys.value = menuIds;
+      checkedKeys.value = menuIds.map(String);
       expandedKeys.value = collectParentKeys(options as MenuTreeNode[]);
     } finally {
       loading.value = false;
@@ -100,6 +98,34 @@ function collectAllKeys(nodes: MenuTreeNode[]): string[] {
     }
   });
   return keys;
+}
+
+function collectDescendantKeys(node: MenuTreeNode): string[] {
+  const keys: string[] = [];
+  node.children?.forEach((child) => {
+    keys.push(child.value);
+    if (child.children?.length) {
+      keys.push(...collectDescendantKeys(child));
+    }
+  });
+  return keys;
+}
+
+function findNodeByKey(nodes: MenuTreeNode[], key: string): MenuTreeNode | null {
+  for (const node of nodes) {
+    if (node.value === key) return node;
+    if (node.children?.length) {
+      const found = findNodeByKey(node.children, key);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/** 子节点均为叶子时，勾选父节点向下全选（如菜单 → 按钮） */
+function shouldCascadeToDescendants(node: MenuTreeNode): boolean {
+  if (!node.children?.length) return false;
+  return node.children.every((child) => !child.children?.length);
 }
 
 function collectParentKeys(nodes: MenuTreeNode[]): string[] {
@@ -131,6 +157,29 @@ function filterMenuTree(nodes: MenuTreeNode[], keyword: string): MenuTreeNode[] 
 
 function getCheckedKeyList(): string[] {
   return checkedKeys.value.map(String);
+}
+
+function onTreeCheck(
+  _keys: string[] | { checked: string[]; halfChecked: string[] },
+  info: { checked: boolean; node: { key: string | number } },
+) {
+  const nodeKey = String(info.node.key);
+  const node = findNodeByKey(menuOptions.value, nodeKey);
+  if (!node) return;
+
+  const current = new Set(checkedKeys.value.map(String));
+  const cascade = shouldCascadeToDescendants(node);
+  const descendantKeys = cascade ? collectDescendantKeys(node) : [];
+
+  if (info.checked) {
+    current.add(nodeKey);
+    descendantKeys.forEach((key) => current.add(key));
+  } else {
+    current.delete(nodeKey);
+    descendantKeys.forEach((key) => current.delete(key));
+  }
+
+  checkedKeys.value = [...current];
 }
 
 function togglePermTree() {
@@ -174,18 +223,11 @@ watch(permKeywords, (value) => {
               : $t('system.role.expandAll')
           }}
         </Button>
-
-        <Checkbox
-          v-model:checked="parentChildLinked"
-          class="shrink-0 whitespace-nowrap"
-        >
-          {{ $t('system.role.parentChildLinked') }}
-        </Checkbox>
-
-        <Tooltip :title="$t('system.role.parentChildLinkedTip')">
-          <CircleHelp class="size-4 shrink-0 cursor-help text-primary" />
-        </Tooltip>
       </div>
+
+      <p class="mb-3 text-sm text-muted-foreground">
+        {{ $t('system.role.assignPermCheckTip') }}
+      </p>
 
       <div class="overflow-hidden rounded-lg border">
         <div class="flex items-center gap-2 border-b px-3 py-2">
@@ -202,10 +244,11 @@ watch(permKeywords, (value) => {
           v-model:expanded-keys="expandedKeys"
           block-node
           checkable
+          check-strictly
           class="px-1 py-1"
-          :check-strictly="!parentChildLinked"
           :field-names="{ title: 'label', key: 'value', children: 'children' }"
           :tree-data="filteredMenuOptions"
+          @check="onTreeCheck"
         />
       </div>
     </Spin>
