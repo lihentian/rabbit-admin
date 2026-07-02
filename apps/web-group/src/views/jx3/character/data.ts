@@ -9,7 +9,7 @@ import type { useJx3CharacterAccess } from '#/composables/use-jx3-character-acce
 import { getAccountList } from '#/api/jx3/account';
 import { getGameServerOptions } from '#/api/jx3/game-server';
 import { getCharacterSpecOptions } from '#/api/jx3/character';
-import { getGameAreaOptions } from '#/constants/jx3.constants';
+import { getGameAreaOptions } from '#/utils/jx3/jx';
 import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 

@@ -11,11 +11,9 @@ import { Button, Card, Collapse, CollapsePanel, Input, Select, Switch } from 'an
 import { getGameServerOptions } from '#/api/jx3/game-server';
 import { getSpecOptions } from '#/api/jx3/spec';
 import CombatPowerInput from '#/components/jx3/CombatPowerInput.vue';
-import { getGameAreaOptions } from '#/constants/jx3.constants';
-import { createEmptySpec } from '#/utils/jx3/account-create';
 import { $t } from '#/locales';
-
-const WUXIANGLOU_SECT_NAME = '无相楼';
+import { createEmptySpec } from '#/utils/jx3/account-create';
+import { EXTRA_SECT_NAMES, getGameAreaOptions } from '#/utils/jx3/jx';
 
 const modelValue = defineModel<null | QuickCreateCharacterItem[]>({
   default: null,
@@ -130,7 +128,10 @@ function resolveMainSectName(specs: QuickCreateSpecItem[]): null | string {
   for (const spec of specs) {
     if (!spec.specId) continue;
     const option = specOptions.value.find((item) => item.value === spec.specId);
-    if (option?.sectName && option.sectName !== WUXIANGLOU_SECT_NAME) {
+    if (
+      option?.sectName &&
+      !(EXTRA_SECT_NAMES as readonly string[]).includes(option.sectName)
+    ) {
       return option.sectName;
     }
   }
@@ -153,7 +154,9 @@ function getSpecSelectOptions(charIndex: number, specIndex: number) {
     const mainSectName = resolveMainSectName(character.specs.slice(0, specIndex));
     if (mainSectName) {
       options = options.filter(
-        (item) => item.sectName === mainSectName || item.sectName === WUXIANGLOU_SECT_NAME,
+        (item) =>
+          item.sectName === mainSectName ||
+          (EXTRA_SECT_NAMES as readonly string[]).includes(item.sectName),
       );
     }
   }

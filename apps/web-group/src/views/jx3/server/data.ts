@@ -2,7 +2,7 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { Jx3GameServerApi } from '#/api/jx3/game-server';
 
-import { getGameAreaOptions } from '#/constants/jx3.constants';
+import { getGameAreaOptions } from '#/utils/jx3/jx';
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
