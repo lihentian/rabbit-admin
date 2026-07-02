@@ -2,15 +2,8 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { Jx3GameServerApi } from '#/api/jx3/game-server';
 
+import { getGameAreaOptions } from '#/constants/jx3.constants';
 import { $t } from '#/locales';
-
-function useGameAreaOptions() {
-  return [
-    { label: $t('jx3.gameServer.gameAreaDual'), value: '双线' },
-    { label: $t('jx3.gameServer.gameAreaTelecom'), value: '电信' },
-    { label: $t('jx3.gameServer.gameAreaWujie'), value: '无界' },
-  ];
-}
 
 export function useFormSchema(): VbenFormSchema[] {
   return [
@@ -18,7 +11,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         class: 'w-full',
-        options: useGameAreaOptions(),
+        options: getGameAreaOptions(),
       },
       fieldName: 'gameArea',
       label: $t('jx3.gameServer.gameArea'),
@@ -57,7 +50,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       componentProps: {
         allowClear: true,
         class: 'w-full',
-        options: useGameAreaOptions(),
+        options: getGameAreaOptions(),
       },
       fieldName: 'gameArea',
       label: $t('jx3.gameServer.gameArea'),
@@ -68,14 +61,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
 export function useColumns(
   onActionClick: OnActionClickFn<Jx3GameServerApi.GameServer>,
 ): VxeTableGridColumns {
-  const gameAreaOptions = useGameAreaOptions();
-
   return [
     {
       field: 'gameArea',
-      formatter: ({ cellValue }) =>
-        gameAreaOptions.find((item) => item.value === cellValue)?.label ??
-        cellValue,
       title: $t('jx3.gameServer.gameArea'),
       width: 100,
     },

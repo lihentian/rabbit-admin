@@ -1,12 +1,17 @@
+import type { Ref } from 'vue';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { Jx3CharacterApi } from '#/api/jx3/character';
 
 import type { Jx3AccountApi } from '#/api/jx3/account';
+import type { useJx3CharacterAccess } from '#/composables/use-jx3-character-access';
 import { getAccountList } from '#/api/jx3/account';
 import { getGameServerOptions } from '#/api/jx3/game-server';
-import { getSpecOptions } from '#/api/jx3/spec';
+import { getCharacterSpecOptions } from '#/api/jx3/character';
+import { getGameAreaOptions } from '#/constants/jx3.constants';
 import { $t } from '#/locales';
+import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
 async function getAccountOptions(params?: Record<string, any>) {
   const result = await getAccountList({
@@ -17,14 +22,6 @@ async function getAccountOptions(params?: Record<string, any>) {
     label: item.account,
     value: item.id,
   }));
-}
-
-export function useGameAreaOptions() {
-  return [
-    { label: $t('jx3.gameServer.gameAreaDual'), value: '双线' },
-    { label: $t('jx3.gameServer.gameAreaTelecom'), value: '电信' },
-    { label: $t('jx3.gameServer.gameAreaWujie'), value: '无界' },
-  ];
 }
 
 export function useFormSchema(isEdit = false): VbenFormSchema[] {
@@ -55,7 +52,7 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
       componentProps: {
         allowClear: true,
         class: 'w-full',
-        options: useGameAreaOptions(),
+        options: getGameAreaOptions(),
       },
       fieldName: 'gameArea',
       label: $t('jx3.character.gameArea'),
@@ -86,12 +83,19 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
   ];
 }
 
-export function useSpecFormSchema(): VbenFormSchema[] {
+export function useSpecFormSchema(
+  characterId: Ref<string | undefined>,
+  excludeSpecRowId: Ref<string | undefined>,
+): VbenFormSchema[] {
   return [
     {
       component: 'ApiSelect',
       componentProps: {
-        api: getSpecOptions,
+        api: async () => {
+          const id = characterId.value;
+          if (!id) return [];
+          return getCharacterSpecOptions(id, excludeSpecRowId.value);
+        },
         class: 'w-full',
         labelField: 'label',
         valueField: 'value',
@@ -101,8 +105,9 @@ export function useSpecFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
-      component: 'InputNumber',
+      component: 'CombatPowerInput',
       componentProps: { class: 'w-full', min: 0 },
+      defaultValue: 0,
       fieldName: 'combatPower',
       label: $t('jx3.character.combatPower'),
       rules: 'required',
@@ -127,7 +132,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'Select',
       componentProps: {
         allowClear: true,
-        options: useGameAreaOptions(),
+        options: getGameAreaOptions(),
       },
       fieldName: 'gameArea',
       label: $t('jx3.character.gameArea'),
@@ -137,6 +142,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 export function useColumns(
   onActionClick: OnActionClickFn<Jx3CharacterApi.Character>,
+  access?: ReturnType<typeof useJx3CharacterAccess>,
 ): VxeTableGridColumns {
   return [
     {
@@ -144,10 +150,16 @@ export function useColumns(
       title: $t('jx3.character.characterName'),
       width: 120,
     },
-    { field: 'accountId', title: $t('jx3.character.accountId'), width: 120 },
+    {
+      field: 'account',
+      formatter: ({ cellValue }) => cellValue ?? '-',
+      title: $t('jx3.character.accountId'),
+      minWidth: 120,
+    },
     { field: 'gameArea', title: $t('jx3.character.gameArea'), width: 100 },
     {
-      field: 'gameServerId',
+      field: 'serverName',
+      formatter: ({ cellValue }) => cellValue ?? '-',
       title: $t('jx3.character.gameServerId'),
       minWidth: 120,
     },
@@ -158,13 +170,23 @@ export function useColumns(
           nameField: 'characterName',
           nameTitle: $t('jx3.character.name'),
           onClick: onActionClick,
-          options: [
-            { code: 'detail', text: $t('jx3.character.detail') },
-            'edit',
-            'delete',
-          ],
         },
         name: 'CellOperation',
+        options: [
+          {
+            code: 'detail',
+            show: () => access?.canSpecList.value ?? false,
+            text: $t('jx3.character.detail'),
+          },
+          {
+            code: 'edit',
+            show: () => access?.canUpdate.value ?? false,
+          },
+          {
+            code: 'delete',
+            show: () => access?.canDelete.value ?? false,
+          },
+        ],
       },
       field: 'operation',
       fixed: 'right',
@@ -176,11 +198,15 @@ export function useColumns(
 
 export function useSpecColumns(
   onActionClick: OnActionClickFn<Jx3CharacterApi.CharacterSpec>,
+  access?: ReturnType<typeof useJx3CharacterAccess>,
+  specCount?: Ref<number>,
 ): VxeTableGridColumns {
   return [
     { field: 'specAlias', title: $t('jx3.character.specId'), minWidth: 120 },
     {
       field: 'combatPower',
+      formatter: ({ cellValue }) =>
+        formatCombatPowerLabel(cellValue, $t('jx3.team.combatPowerUnit')),
       title: $t('jx3.character.combatPower'),
       minWidth: 120,
     },
@@ -204,6 +230,17 @@ export function useSpecColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
+        options: [
+          {
+            code: 'edit',
+            show: () => access?.canSpecUpdate.value ?? false,
+          },
+          {
+            code: 'delete',
+            show: () =>
+              (access?.canSpecDelete.value ?? false) && (specCount?.value ?? 0) > 1,
+          },
+        ],
       },
       field: 'operation',
       fixed: 'right',

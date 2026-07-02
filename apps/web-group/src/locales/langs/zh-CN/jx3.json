@@ -9,10 +9,7 @@
     "alias": "别名",
     "sort": "排序",
     "keywords": "关键词",
-    "operation": "操作",
-    "gameAreaDual": "双线",
-    "gameAreaTelecom": "电信",
-    "gameAreaWujie": "无界"
+    "operation": "操作"
   },
   "sect": {
     "title": "门派配置",
@@ -93,9 +90,16 @@
     "remark": "备注",
     "keywords": "关键词",
     "operation": "操作",
-    "resetPassword": "重置密码",
-    "newPassword": "新密码",
-    "resetPasswordSuccess": "密码重置成功"
+    "detail": "详情",
+    "noCharacters": "暂无角色",
+    "createWithCharactersSuccess": "账号、角色与心法创建成功",
+    "characters": "角色列表",
+    "addCharacter": "添加角色",
+    "removeCharacter": "移除角色",
+    "specsSection": "心法",
+    "currentUserRequired": "未获取到当前登录用户，请重新登录",
+    "charactersRequired": "请至少添加一个角色",
+    "specsRequired": "每个角色至少添加一条心法"
   },
   "character": {
     "title": "游戏角色",

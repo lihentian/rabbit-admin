@@ -11,6 +11,7 @@ import { getCharacterList, getCharacterSpecs } from '#/api/jx3/character';
 import type { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 import { getDungeonTemplateOptions } from '#/api/jx3/dungeon-template';
 import { $t } from '#/locales';
+import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 import { useDungeonGroupedSelectProps, usePlayerCountOptions } from '#/views/jx3/dungeon/data';
 
 export function useOpenOptions() {
@@ -233,6 +234,8 @@ export function useMemberColumns(
     { field: 'specAlias', title: $t('jx3.team.characterSpecId'), minWidth: 120 },
     {
       field: 'combatPower',
+      formatter: ({ cellValue }) =>
+        formatCombatPowerLabel(cellValue, $t('jx3.team.combatPowerUnit')),
       title: $t('jx3.character.combatPower'),
       width: 100,
     },

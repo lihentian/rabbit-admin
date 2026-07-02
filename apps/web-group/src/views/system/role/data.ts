@@ -98,13 +98,13 @@ export function useColumns<T = SystemRoleApi.SystemRole>(
   onStatusChange?: (newStatus: number, row: T) => PromiseLike<boolean | undefined>,
 ): VxeTableGridColumns {
   return [
-    { field: 'name', title: $t('system.role.roleName'), width: 150 },
-    { field: 'code', title: $t('system.role.code'), width: 150 },
+    { field: 'name', title: $t('system.role.roleName'), width: 140 },
+    { field: 'code', title: $t('system.role.code'), width: 120 },
     { field: 'sort', title: $t('system.role.sort'), width: 80 },
     {
       field: 'dataScopeLabel',
       title: $t('system.role.dataScope'),
-      width: 160,
+      minWidth: 160,
     },
     {
       cellRender: {

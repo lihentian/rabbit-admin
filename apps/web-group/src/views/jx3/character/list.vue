@@ -14,12 +14,14 @@ import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteCharacter, getCharacterList } from '#/api/jx3/character';
+import { useJx3CharacterAccess } from '#/composables/use-jx3-character-access';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import DetailDrawer from './modules/detail-drawer.vue';
 import Form from './modules/form.vue';
 
+const characterAccess = useJx3CharacterAccess();
 const detailDrawerRef = ref<InstanceType<typeof DetailDrawer>>();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -84,7 +86,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: true,
   },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(onActionClick, characterAccess),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -120,7 +122,11 @@ function refreshGrid() {
     <DetailDrawer ref="detailDrawerRef" />
     <Grid :table-title="$t('jx3.character.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-if="characterAccess.canCreate.value"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('jx3.character.name')]) }}
         </Button>

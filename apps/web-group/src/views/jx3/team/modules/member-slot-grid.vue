@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 
 import { $t } from '#/locales';
+import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
 import { MEMBER_CARD_HEIGHT, SQUAD_COLUMN_MAX_WIDTH } from './member-card.constants';
 import MemberCard from './member-card.vue';
@@ -78,7 +79,7 @@ const totalCombatPower = computed(() =>
 );
 
 const totalCombatPowerText = computed(() =>
-  `${Math.floor(totalCombatPower.value / 10000)}${$t('jx3.team.combatPowerUnit')}`,
+  formatCombatPowerLabel(totalCombatPower.value, $t('jx3.team.combatPowerUnit')),
 );
 
 const slottedMembers = computed(() =>

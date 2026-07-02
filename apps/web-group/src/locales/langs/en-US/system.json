@@ -42,7 +42,6 @@
     "permKeywords": "Menu permission name",
     "expandAll": "Expand",
     "collapseAll": "Collapse",
-    "assignPermCheckTip": "Checking a parent selects all button permissions below it. Checking a child does not select parents; catalog menus must be checked separately.",
     "selectAll": "All",
     "selectAllChildren": "Select all"
   },

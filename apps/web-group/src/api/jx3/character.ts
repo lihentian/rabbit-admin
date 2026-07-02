@@ -5,11 +5,13 @@ import { requestClient } from '#/api/request';
 
 export namespace Jx3CharacterApi {
   export interface Character {
+    account?: string | null;
     accountId: string;
     characterName: string;
     gameArea: string;
     gameServerId: string;
     id: string;
+    serverName?: string | null;
   }
 
   export interface CharacterSpec {
@@ -19,6 +21,14 @@ export namespace Jx3CharacterApi {
     isCw?: boolean | number;
     specId: string;
     specAlias?: string;
+  }
+
+  export interface CharacterSpecOption {
+    label: string;
+    position: string;
+    specAlias: string;
+    specIcon?: null | string;
+    value: string;
   }
 }
 
@@ -36,7 +46,7 @@ async function getCharacterForm(id: string) {
 }
 
 async function createCharacter(data: Recordable<any>) {
-  return requestClient.post('/jx3/characters', data);
+  return requestClient.post<string>('/jx3/characters', data);
 }
 
 async function updateCharacter(id: string, data: Recordable<any>) {
@@ -51,6 +61,16 @@ async function deleteCharacter(ids: string | string[]) {
 async function getCharacterSpecs(characterId: string) {
   return requestClient.get<Jx3CharacterApi.CharacterSpec[]>(
     `/jx3/characters/${characterId}/specs`,
+  );
+}
+
+async function getCharacterSpecOptions(
+  characterId: string,
+  excludeSpecRowId?: string,
+) {
+  return requestClient.get<Jx3CharacterApi.CharacterSpecOption[]>(
+    `/jx3/characters/${characterId}/spec-options`,
+    { params: excludeSpecRowId ? { excludeSpecRowId } : undefined },
   );
 }
 
@@ -89,6 +109,7 @@ export {
   deleteCharacterSpec,
   getCharacterForm,
   getCharacterList,
+  getCharacterSpecOptions,
   getCharacterSpecs,
   updateCharacter,
   updateCharacterSpec,

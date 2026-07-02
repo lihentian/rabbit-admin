@@ -12,6 +12,55 @@ export namespace Jx3AccountApi {
     serviceId: string;
     userId: string;
   }
+
+  export interface AccountFullSpec {
+    combatPower: number;
+    isCw?: boolean | number;
+    specId: string;
+  }
+
+  export interface AccountFullCharacter {
+    characterName: string;
+    gameArea: string;
+    gameServerId: string;
+    specs: AccountFullSpec[];
+  }
+
+  export interface AccountFullPayload {
+    account: string;
+    characters: AccountFullCharacter[];
+    password: string;
+    remark?: string;
+    serviceId: string;
+    userId: string;
+  }
+
+  export interface AccountFullUpdateSpec extends AccountFullSpec {
+    id?: string;
+    specAlias?: string;
+  }
+
+  export interface AccountFullUpdateCharacter {
+    characterName: string;
+    gameArea: string;
+    gameServerId: string;
+    id?: string;
+    serverName?: string | null;
+    specs: AccountFullUpdateSpec[];
+  }
+
+  export interface AccountFullUpdatePayload {
+    account: string;
+    characters: AccountFullUpdateCharacter[];
+    password: string;
+    remark?: string;
+    serviceId: string;
+    userId: string;
+  }
+
+  export interface AccountDetail extends Account {
+    characters: AccountFullUpdateCharacter[];
+  }
 }
 
 async function getAccountList(params: Recordable<any>) {
@@ -27,16 +76,32 @@ async function getAccountForm(id: string) {
   );
 }
 
+async function getAccountDetail(id: string) {
+  return requestClient.get<Jx3AccountApi.AccountDetail>(
+    `/jx3/accounts/${id}/detail`,
+  );
+}
+
+async function getAccountCharacters(id: string) {
+  return requestClient.get<Jx3AccountApi.AccountFullUpdateCharacter[]>(
+    `/jx3/accounts/${id}/characters`,
+  );
+}
+
 async function createAccount(data: Recordable<any>) {
   return requestClient.post('/jx3/accounts', data);
+}
+
+async function createAccountFull(data: Jx3AccountApi.AccountFullPayload) {
+  return requestClient.post('/jx3/accounts/full', data);
 }
 
 async function updateAccount(id: string, data: Recordable<any>) {
   return requestClient.put(`/jx3/accounts/${id}`, data);
 }
 
-async function resetAccountPassword(id: string, password: string) {
-  return requestClient.put(`/jx3/accounts/${id}/password`, { password });
+async function updateAccountFull(id: string, data: Jx3AccountApi.AccountFullUpdatePayload) {
+  return requestClient.put(`/jx3/accounts/${id}/full`, data);
 }
 
 async function deleteAccount(ids: string | string[]) {
@@ -46,9 +111,12 @@ async function deleteAccount(ids: string | string[]) {
 
 export {
   createAccount,
+  createAccountFull,
   deleteAccount,
+  getAccountCharacters,
+  getAccountDetail,
   getAccountForm,
   getAccountList,
-  resetAccountPassword,
   updateAccount,
+  updateAccountFull,
 };

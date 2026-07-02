@@ -9,10 +9,7 @@
     "alias": "Alias",
     "sort": "Sort",
     "keywords": "Keywords",
-    "operation": "Operation",
-    "gameAreaDual": "Dual",
-    "gameAreaTelecom": "Telecom",
-    "gameAreaWujie": "Unbounded"
+    "operation": "Operation"
   },
   "sect": {
     "title": "Sects",
@@ -93,9 +90,16 @@
     "remark": "Remark",
     "keywords": "Keywords",
     "operation": "Operation",
-    "resetPassword": "Reset Password",
-    "newPassword": "New Password",
-    "resetPasswordSuccess": "Password reset successfully"
+    "detail": "Detail",
+    "noCharacters": "No characters",
+    "createWithCharactersSuccess": "Account, characters and specs created successfully",
+    "characters": "Characters",
+    "addCharacter": "Add Character",
+    "removeCharacter": "Remove Character",
+    "specsSection": "Specs",
+    "currentUserRequired": "Current user not found. Please sign in again.",
+    "charactersRequired": "Add at least one character",
+    "specsRequired": "Each character needs at least one spec"
   },
   "character": {
     "title": "Characters",

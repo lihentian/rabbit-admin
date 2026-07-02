@@ -12,7 +12,7 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
       fieldName: 'username',
       label: $t('system.user.username'),
       rules: 'required',
-      componentProps: { disabled: isEdit },
+      componentProps: { autocomplete: 'off', disabled: isEdit },
     },
     {
       component: 'Input',
@@ -36,6 +36,7 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
     },
     {
       component: 'InputPassword',
+      componentProps: { autocomplete: 'new-password' },
       fieldName: 'password',
       label: $t('system.user.password'),
       rules: isEdit ? undefined : 'required',

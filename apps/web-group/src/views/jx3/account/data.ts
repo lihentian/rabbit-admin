@@ -2,61 +2,43 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridColumns } from '#/adapter/vxe-table';
 import type { Jx3AccountApi } from '#/api/jx3/account';
 
-import { getUserOptions } from '#/api/system/user';
+import { markRaw } from 'vue';
+
+import type { useJx3AccountAccess } from '#/composables/use-jx3-account-access';
 import { $t } from '#/locales';
 
-export function useFormSchema(isEdit = false): VbenFormSchema[] {
+import QuickCreateCharactersField from './modules/quick-create-characters-field.vue';
+
+const accountInputProps = { autocomplete: 'off' } as const;
+const passwordInputProps = { autocomplete: 'new-password' } as const;
+
+export function useFormSchema(): VbenFormSchema[] {
   return [
     {
       component: 'Input',
-      fieldName: 'userId',
-      label: $t('jx3.account.userId'),
-      rules: 'required',
-    },
-    {
-      component: 'ApiSelect',
-      componentProps: {
-        api: getUserOptions,
-        class: 'w-full',
-        labelField: 'label',
-        showSearch: true,
-        valueField: 'value',
-      },
-      fieldName: 'serviceId',
-      label: $t('jx3.account.serviceId'),
-      rules: 'required',
-    },
-    {
-      component: 'Input',
+      componentProps: accountInputProps,
       fieldName: 'account',
       label: $t('jx3.account.account'),
       rules: 'required',
     },
     {
       component: 'InputPassword',
+      componentProps: passwordInputProps,
       fieldName: 'password',
       label: $t('jx3.account.password'),
-      rules: isEdit ? undefined : 'required',
-      dependencies: {
-        show: () => !isEdit,
-        triggerFields: [],
-      },
+      rules: 'required',
     },
     {
       component: 'Input',
       fieldName: 'remark',
       label: $t('jx3.account.remark'),
     },
-  ];
-}
-
-export function useResetPasswordSchema(): VbenFormSchema[] {
-  return [
     {
-      component: 'InputPassword',
-      fieldName: 'password',
-      label: $t('jx3.account.password'),
-      rules: 'required',
+      component: markRaw(QuickCreateCharactersField),
+      defaultValue: null,
+      fieldName: 'characters',
+      formItemClass: 'col-span-full w-full',
+      hideLabel: true,
     },
   ];
 }
@@ -68,37 +50,12 @@ export function useGridFormSchema(): VbenFormSchema[] {
       fieldName: 'keywords',
       label: $t('jx3.account.keywords'),
     },
-    {
-      component: 'ApiSelect',
-      componentProps: {
-        allowClear: true,
-        api: getUserOptions,
-        class: 'w-full',
-        labelField: 'label',
-        showSearch: true,
-        valueField: 'value',
-      },
-      fieldName: 'userId',
-      label: $t('jx3.account.userId'),
-    },
-    {
-      component: 'ApiSelect',
-      componentProps: {
-        allowClear: true,
-        api: getUserOptions,
-        class: 'w-full',
-        labelField: 'label',
-        showSearch: true,
-        valueField: 'value',
-      },
-      fieldName: 'serviceId',
-      label: $t('jx3.account.serviceId'),
-    },
   ];
 }
 
 export function useColumns(
   onActionClick: OnActionClickFn<Jx3AccountApi.Account>,
+  access?: ReturnType<typeof useJx3AccountAccess>,
 ): VxeTableGridColumns {
   return [
     { field: 'account', title: $t('jx3.account.account'), minWidth: 140 },
@@ -112,16 +69,23 @@ export function useColumns(
           nameField: 'account',
           nameTitle: $t('jx3.account.name'),
           onClick: onActionClick,
-          options: [
-            'edit',
-            {
-              code: 'resetPassword',
-              text: $t('jx3.account.resetPassword'),
-            },
-            'delete',
-          ],
         },
         name: 'CellOperation',
+        options: [
+          {
+            code: 'detail',
+            show: () => access?.canView.value ?? false,
+            text: $t('jx3.account.detail'),
+          },
+          {
+            code: 'edit',
+            show: () => access?.canUpdate.value ?? false,
+          },
+          {
+            code: 'delete',
+            show: () => access?.canDelete.value ?? false,
+          },
+        ],
       },
       field: 'operation',
       fixed: 'right',

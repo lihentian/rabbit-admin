@@ -6,6 +6,7 @@ import type { Jx3TeamApi } from '#/api/jx3/team';
 import { computed } from 'vue';
 
 import { $t } from '#/locales';
+import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
 import CoverBadge from './cover-badge.vue';
 import { MEMBER_CARD_HEIGHT, MEMBER_CARD_HEIGHT_WITH_REMARK } from './member-card.constants';
@@ -66,7 +67,9 @@ const accountRemarkText = computed(() => props.character.accountRemark?.trim() |
 const accountRemarkDisplay = computed(() => accountRemarkText.value || '—');
 const accountRemarkEmpty = computed(() => !accountRemarkText.value);
 
-const combatPowerText = computed(() => `${Math.floor(props.character.combatPower / 10000)}万`);
+const combatPowerText = computed(() =>
+  formatCombatPowerLabel(props.character.combatPower, $t('jx3.team.combatPowerUnit')),
+);
 
 const inactive = computed(() => props.disabled || props.dragging);
 

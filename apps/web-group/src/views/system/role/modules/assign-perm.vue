@@ -270,10 +270,6 @@ watch(permKeywords, (value) => {
         </Button>
       </div>
 
-      <p class="mb-3 text-sm text-muted-foreground">
-        {{ $t('system.role.assignPermCheckTip') }}
-      </p>
-
       <div class="overflow-hidden rounded-lg border">
         <div class="flex items-center gap-2 border-b px-3 py-2">
           <Checkbox

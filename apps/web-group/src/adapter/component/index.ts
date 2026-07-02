@@ -73,6 +73,7 @@ import { isEmpty } from '@vben/utils';
 import { message, Modal, notification } from 'antdv-next';
 
 import { upload_file } from '#/api';
+import CombatPowerInput from '#/components/jx3/CombatPowerInput.vue';
 type AdapterUploadProps = UploadProps & {
   aspectRatio?: string;
   crop?: boolean;
@@ -548,6 +549,7 @@ export type ComponentType =
   | 'Checkbox'
   | 'CheckboxGroup'
   | 'CollapsibleParams'
+  | 'CombatPowerInput'
   | 'DatePicker'
   | 'DefaultButton'
   | 'Divider'
@@ -583,6 +585,7 @@ export interface ComponentPropsMap {
   Checkbox: CheckboxProps;
   CheckboxGroup: CheckboxGroupProps;
   CollapsibleParams: CollapsibleParamsProps;
+  CombatPowerInput: InputNumberProps;
   DatePicker: DatePickerProps;
   DefaultButton: ButtonProps;
   Divider: DividerProps;
@@ -691,6 +694,7 @@ async function initComponentAdapter() {
     TreeSelect: withDefaultPlaceholder(TreeSelect, 'select'),
     Upload: withPreviewUpload(),
     CollapsibleParams: VbenCollapsibleParams,
+    CombatPowerInput: withDefaultPlaceholder(CombatPowerInput, 'input'),
   };
 
   // 将组件注册到全局共享状态中

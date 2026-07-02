@@ -7,57 +7,31 @@ import type { Jx3AccountApi } from '#/api/jx3/account';
 
 import { ref } from 'vue';
 
-import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';
 
-import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  deleteAccount,
-  getAccountList,
-  resetAccountPassword,
-} from '#/api/jx3/account';
+import { deleteAccount, getAccountList } from '#/api/jx3/account';
+import { useJx3AccountAccess } from '#/composables/use-jx3-account-access';
 import { $t } from '#/locales';
 
-import { useColumns, useGridFormSchema, useResetPasswordSchema } from './data';
+import { useColumns, useGridFormSchema } from './data';
+import DetailDrawer from './modules/detail-drawer.vue';
 import Form from './modules/form.vue';
 
-const resetAccountId = ref<string>();
+const accountAccess = useJx3AccountAccess();
+const detailDrawerRef = ref<InstanceType<typeof DetailDrawer>>();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
 
-const [ResetPasswordForm, resetPasswordFormApi] = useVbenForm({
-  schema: useResetPasswordSchema(),
-  showDefaultActions: false,
-});
-
-const [ResetPasswordModal, resetPasswordModalApi] = useVbenModal({
-  async onConfirm() {
-    const { valid } = await resetPasswordFormApi.validate();
-    if (!valid || !resetAccountId.value) return;
-    const { password } = await resetPasswordFormApi.getValues();
-    resetPasswordModalApi.lock();
-    try {
-      await resetAccountPassword(resetAccountId.value, password);
-      message.success($t('jx3.account.resetPasswordSuccess'));
-      resetPasswordModalApi.close();
-    } finally {
-      resetPasswordModalApi.lock(false);
-    }
-  },
-  onOpenChange(isOpen) {
-    if (isOpen) {
-      resetPasswordFormApi.resetForm();
-      const data = resetPasswordModalApi.getData<Jx3AccountApi.Account>();
-      resetAccountId.value = data?.id;
-    }
-  },
-});
+function onDetail(row: Jx3AccountApi.Account) {
+  detailDrawerRef.value?.open(row);
+}
 
 function onEdit(row: Jx3AccountApi.Account) {
   formDrawerApi.setData(row).open();
@@ -65,10 +39,6 @@ function onEdit(row: Jx3AccountApi.Account) {
 
 function onCreate() {
   formDrawerApi.setData(null).open();
-}
-
-function onResetPassword(row: Jx3AccountApi.Account) {
-  resetPasswordModalApi.setData(row).open();
 }
 
 function onDelete(row: Jx3AccountApi.Account) {
@@ -99,12 +69,12 @@ function onActionClick({
       onDelete(row);
       break;
     }
-    case 'edit': {
-      onEdit(row);
+    case 'detail': {
+      onDetail(row);
       break;
     }
-    case 'resetPassword': {
-      onResetPassword(row);
+    case 'edit': {
+      onEdit(row);
       break;
     }
   }
@@ -116,7 +86,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: true,
   },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(onActionClick, accountAccess),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -149,12 +119,14 @@ function refreshGrid() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="refreshGrid" />
-    <ResetPasswordModal :title="$t('jx3.account.resetPassword')">
-      <ResetPasswordForm class="mx-4" />
-    </ResetPasswordModal>
+    <DetailDrawer ref="detailDrawerRef" />
     <Grid :table-title="$t('jx3.account.list')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
+        <Button
+          v-if="accountAccess.canCreate.value"
+          type="primary"
+          @click="onCreate"
+        >
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('jx3.account.name')]) }}
         </Button>
