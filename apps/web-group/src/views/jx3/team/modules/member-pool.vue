@@ -236,7 +236,7 @@ function poolAttrFilterBtnClass(active: boolean) {
         <Input
           v-model:value="searchKeyword"
           allow-clear
-          class="min-w-0 flex-1"
+          class="min-w-0 flex-1 select-text"
           :placeholder="$t('jx3.team.poolSearchPlaceholder')"
         />
         <div class="flex shrink-0 gap-1">

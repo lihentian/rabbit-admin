@@ -5,6 +5,8 @@ import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { computed } from 'vue';
 
+import { Tooltip } from 'antdv-next';
+
 import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
@@ -67,9 +69,9 @@ const accountRemarkText = computed(() => props.character.accountRemark?.trim() |
 const accountRemarkDisplay = computed(() => accountRemarkText.value || '—');
 const accountRemarkEmpty = computed(() => !accountRemarkText.value);
 
-const combatPowerText = computed(() =>
-  formatCombatPowerLabel(props.character.combatPower, $t('jx3.team.combatPowerUnit')),
-);
+const combatPowerText = computed(() => {
+  return formatCombatPowerLabel(props.character.combatPower, $t('jx3.team.combatPowerUnit'));
+});
 
 const inactive = computed(() => props.disabled || props.dragging);
 
@@ -107,8 +109,8 @@ function onPointerDown(event: PointerEvent) {
   >
     <div
       v-bind="$attrs"
-      class="member-card relative flex items-center"
-      :style="{ minHeight: `${cardHeight}px` }"
+      class="member-card relative flex items-stretch"
+      :style="{ height: `${cardHeight}px` }"
       :class="{
         'pointer-events-none': inactive,
         'member-card--overlay': overlay && !dragging,
@@ -116,16 +118,12 @@ function onPointerDown(event: PointerEvent) {
         'cursor-default': inactive,
         'cursor-grab active:cursor-grabbing': !inactive,
       }"
-      :title="cdConflictMessage"
       @pointerdown="onPointerDown"
     >
-      <span
-        v-if="cdConflict"
-        class="member-card-cd pointer-events-none absolute right-1 top-1 z-10 select-none"
-        aria-hidden="true"
-      >
-        CD
-      </span>
+      <Tooltip v-if="cdConflict" :title="cdConflictMessage" placement="topRight">
+        <span class="member-card-cd absolute right-1 top-1 z-10 cursor-help select-none"> CD </span>
+      </Tooltip>
+
       <div
         v-if="coverBadges.length"
         class="member-card-badges pointer-events-none absolute bottom-0.5 right-1 z-10 flex items-center gap-0.5"
@@ -133,7 +131,7 @@ function onPointerDown(event: PointerEvent) {
         <CoverBadge v-for="badge in coverBadges" :key="badge" :label="badge" size="card" />
       </div>
       <div
-        class="member-card-icon-col pointer-events-none absolute bottom-2 left-1 top-1 z-10 flex w-7 flex-col items-center justify-between"
+        class="member-card-icon-col pointer-events-none absolute bottom-1 left-0 top-0 z-10 flex w-8 flex-col items-center justify-between"
       >
         <div class="member-card-icon shrink-0">
           <img
@@ -149,18 +147,21 @@ function onPointerDown(event: PointerEvent) {
         </div>
         <span v-if="character.isCw" class="member-card-cw select-none" aria-hidden="true">橙</span>
       </div>
-      <div class="min-w-0 flex-1 select-none pl-9 pt-0.2" :class="{ 'pr-6': cdConflict }">
+      <div
+        class="flex min-w-0 flex-1 flex-col justify-between self-stretch select-none py-1 pb-1 pl-8"
+        :class="{ 'pr-6': cdConflict }"
+      >
         <div class="member-card-text truncate text-[16px] font-semibold leading-tight">
           {{ character.characterName }}
         </div>
         <div class="member-card-text truncate text-xs leading-tight opacity-90">
-          {{ character.serverName ?? '-' }}
+          {{ character.serverName }}
         </div>
         <div
           v-if="showAccountRemark"
           class="member-card-remark-row truncate"
           :class="{ 'member-card-remark-row--empty': accountRemarkEmpty }"
-          :title="accountRemarkText || undefined"
+          :title="accountRemarkText"
         >
           {{ accountRemarkDisplay }}
         </div>
@@ -197,6 +198,10 @@ function onPointerDown(event: PointerEvent) {
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45);
 }
 
+.member-card--dragging .member-card-cd {
+  pointer-events: none;
+}
+
 .member-card-cd {
   padding: 1px 4px;
   font-size: 9px;
@@ -220,7 +225,6 @@ function onPointerDown(event: PointerEvent) {
 
 .member-card-remark-row {
   min-width: 0;
-  margin-top: 4px;
   padding: 2px 4px;
   border-radius: 2px;
   font-size: 10px;

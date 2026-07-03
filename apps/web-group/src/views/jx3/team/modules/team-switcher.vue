@@ -69,6 +69,7 @@ function onSearch(keywords: string) {
 }
 
 function onChange(teamId: string) {
+  console.log('onChange', teamId, props.modelValue);
   if (teamId && teamId !== props.modelValue) {
     emits('update:modelValue', teamId);
   }

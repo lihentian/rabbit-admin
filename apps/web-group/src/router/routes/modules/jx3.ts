@@ -97,7 +97,6 @@ const routes: RouteRecordRaw[] = [
             path: 'config',
             name: 'Jx3TeamConfig',
             meta: {
-              fullPathKey: false,
               title: $t('jx3.team.config'),
             },
             component: () => import('#/views/jx3/team/config.vue'),

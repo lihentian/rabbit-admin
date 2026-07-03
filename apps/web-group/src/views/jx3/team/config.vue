@@ -3,12 +3,11 @@ import type { SlotMember } from './modules/member-slot-grid.vue';
 
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
-import { computed, h, onBeforeUnmount, reactive, ref, watch } from 'vue';
+import { computed, h, onActivated, onBeforeUnmount, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
-import { Plus } from '@vben/icons';
 
 import { Button, message, Modal } from 'antdv-next';
 
@@ -19,23 +18,22 @@ import {
   previewTeamMemberLayout,
   updateTeamMemberLayout,
 } from '#/api/jx3/team';
+import { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 import { $t } from '#/locales';
 
 import Form from './modules/form.vue';
 import MemberAccountModal from './modules/member-account-modal.vue';
-import { POOL_CARD_MIN_WIDTH, POOL_PANEL_MIN_WIDTH, SQUAD_COLUMN_MAX_WIDTH } from './modules/member-card.constants';
+import {
+  POOL_CARD_MIN_WIDTH,
+  POOL_PANEL_MIN_WIDTH,
+  SQUAD_COLUMN_MAX_WIDTH,
+} from './modules/member-card.constants';
 import MemberCard from './modules/member-card.vue';
 import MemberPool from './modules/member-pool.vue';
 import MemberSlotGrid from './modules/member-slot-grid.vue';
 import TeamSwitcher from './modules/team-switcher.vue';
-import {
-  getLayoutIssueLabelWidth,
-  renderLayoutIssue,
-} from './utils/layout-composition-issue';
-import {
-  getSpecMeta,
-} from './utils/enrich-available-character';
-import { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
+import { getSpecMeta } from './utils/enrich-available-character';
+import { getLayoutIssueLabelWidth, renderLayoutIssue } from './utils/layout-composition-issue';
 
 interface DragPayload {
   characterId: string;
@@ -51,6 +49,8 @@ const router = useRouter();
 const { setTabTitle } = useTabs();
 
 const teamId = computed(() => String(route.query.teamId ?? ''));
+
+const isPageActive = ref(false);
 
 const teamRow = ref<Jx3TeamApi.Team>();
 const availableSpecDict = ref<Jx3TeamApi.AvailableCharacterSpecDict>({});
@@ -72,9 +72,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   destroyOnClose: true,
 });
 
-const showEmpty = computed(
-  () => teamsLoaded.value && !teamId.value && !hasActiveTeams.value,
-);
+const showEmpty = computed(() => teamsLoaded.value && !teamId.value && !hasActiveTeams.value);
 
 const layoutReadonly = computed(
   () => teamRow.value?.status === 3 || !(teamRow.value?.canManageMembers ?? false),
@@ -155,17 +153,15 @@ function resetSlots(playerCount: number) {
 function toSlotMember(
   char: Jx3TeamApi.AvailableCharacterSlim,
   characterSpecId?: string,
-  member?: Pick<
-    Jx3TeamApi.TeamMember,
-    'coversBigIron' | 'coversSmallIron' | 'coversTeam'
-  > | SlotMember,
+  member?:
+    | Pick<Jx3TeamApi.TeamMember, 'coversBigIron' | 'coversSmallIron' | 'coversTeam'>
+    | SlotMember,
 ): SlotMember {
-  const spec =
-    char.specs.find((s) => s.characterSpecId === characterSpecId) ??
-    char.specs[0];
+  const spec = char.specs.find((s) => s.characterSpecId === characterSpecId) ?? char.specs[0];
   const specId = spec?.specId ?? char.specId;
   const meta = getSpecMeta(availableSpecDict.value, specId);
   return {
+    cdConflict: char.cdConflict,
     characterId: char.characterId,
     characterName: char.characterName,
     characterSpecId: spec?.characterSpecId ?? char.characterSpecId,
@@ -175,6 +171,7 @@ function toSlotMember(
     coversTeam: !!member?.coversTeam,
     isCw: !!(spec?.isCw ?? char.isCw),
     sectId: meta.sectId,
+    sectName: meta.sectName,
     serverName: char.serverName,
     specAlias: meta.specAlias,
     specIcon: meta.specIcon,
@@ -211,7 +208,9 @@ async function loadData() {
   }
 }
 
-watch(teamId, loadData, { immediate: true });
+onActivated(() => {
+  loadData();
+});
 
 let activePointerId: null | number = null;
 let pendingPayload: DragPayload | null = null;
@@ -306,10 +305,7 @@ function beginPointerDrag(payload: DragPayload, event: PointerEvent) {
 
 onBeforeUnmount(cleanupPointerDrag);
 
-function onPoolPickup(
-  character: Jx3TeamApi.AvailableCharacter,
-  event: PointerEvent,
-) {
+function onPoolPickup(character: Jx3TeamApi.AvailableCharacter, event: PointerEvent) {
   if (slottedCharacterIds.value.has(character.characterId)) return;
   beginPointerDrag(
     {
@@ -482,9 +478,7 @@ async function onSave() {
 }
 
 function updateTabTitle(teamName?: string) {
-  const title = teamName
-    ? `${$t('jx3.team.config')} - ${teamName}`
-    : $t('jx3.team.config');
+  const title = teamName ? `${$t('jx3.team.config')} - ${teamName}` : $t('jx3.team.config');
   setTabTitle(title);
 }
 
@@ -529,11 +523,10 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
 function onBack() {
   router.push({ name: 'Jx3TeamList' });
 }
-
 </script>
 
 <template>
-  <Page auto-content-height>
+  <Page auto-content-height content-class="select-none" header-class="select-none">
     <template #title>
       <TeamSwitcher
         ref="teamSwitcherRef"
@@ -580,13 +573,20 @@ function onBack() {
         <MemberSlotGrid
           class="shrink-0 self-start"
           :column-count="columnCount"
-          :dragging-from-join-sort="
-            dragging?.source === 'slot' ? dragging.fromJoinSort : undefined
-          "
+          :dragging-from-join-sort="dragging?.source === 'slot' ? dragging.fromJoinSort : undefined"
           :drop-target-join-sort="dropTargetJoinSort"
           :player-count="teamRow?.playerCount ?? 25"
           :readonly="readonly"
           :slots="slots"
+          :team-context="
+            teamRow
+              ? {
+                  cdLimitEnabled: !!teamRow.cdLimitEnabled,
+                  dungeonId: teamRow.dungeonId,
+                  id: teamId,
+                }
+              : undefined
+          "
           :team-id="teamId"
           @covers-updated="onCoversUpdated"
           @pickup="onSlotPickup"
@@ -623,7 +623,9 @@ function onBack() {
         :style="{
           left: `${dragPreview.x}px`,
           top: `${dragPreview.y}px`,
-          width: dragPreview.fromPool ? `${POOL_CARD_MIN_WIDTH}px` : `${SQUAD_COLUMN_MAX_WIDTH - 8}px`,
+          width: dragPreview.fromPool
+            ? `${POOL_CARD_MIN_WIDTH}px`
+            : `${SQUAD_COLUMN_MAX_WIDTH - 8}px`,
         }"
       >
         <MemberCard

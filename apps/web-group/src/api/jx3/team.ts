@@ -47,11 +47,11 @@ export namespace Jx3TeamApi {
   }
 
   export interface AvailableCharacterSpecMeta {
-    position?: string;
-    sectId?: string;
-    sectName?: string;
-    specAlias?: string;
-    specIcon?: null | string;
+    position: string;
+    sectId: string;
+    sectName: string;
+    specAlias: string;
+    specIcon: string;
   }
 
   export type AvailableCharacterSpecDict = Record<string, AvailableCharacterSpecMeta>;
@@ -77,9 +77,7 @@ export namespace Jx3TeamApi {
   }
 
   /** 角色池卡片展示（由 slim + specDict 派生） */
-  export interface AvailableCharacter
-    extends AvailableCharacterSlim,
-      AvailableCharacterSpecMeta {}
+  export interface AvailableCharacter extends AvailableCharacterSlim, AvailableCharacterSpecMeta {}
 
   export interface AvailableCharactersResult {
     canManageMembers?: boolean;
@@ -157,9 +155,7 @@ async function deleteTeam(ids: string | string[]) {
 }
 
 async function getTeamMembers(teamId: string) {
-  return requestClient.get<Jx3TeamApi.TeamMember[]>(
-    `/jx3/teams/${teamId}/members`,
-  );
+  return requestClient.get<Jx3TeamApi.TeamMember[]>(`/jx3/teams/${teamId}/members`);
 }
 
 async function getTeamAvailableCharacters(teamId: string) {
@@ -168,24 +164,17 @@ async function getTeamAvailableCharacters(teamId: string) {
   );
 }
 
-async function previewTeamMemberLayout(
-  teamId: string,
-  slots: Jx3TeamApi.LayoutSlot[],
-) {
+async function previewTeamMemberLayout(teamId: string, slots: Jx3TeamApi.LayoutSlot[]) {
   return requestClient.post<Jx3TeamApi.LayoutPreviewResult>(
     `/jx3/teams/${teamId}/members/layout/preview`,
     { slots },
   );
 }
 
-async function updateTeamMemberLayout(
-  teamId: string,
-  slots: Jx3TeamApi.LayoutSlot[],
-) {
-  return requestClient.put<Jx3TeamApi.LayoutSaveResult>(
-    `/jx3/teams/${teamId}/members/layout`,
-    { slots },
-  );
+async function updateTeamMemberLayout(teamId: string, slots: Jx3TeamApi.LayoutSlot[]) {
+  return requestClient.put<Jx3TeamApi.LayoutSaveResult>(`/jx3/teams/${teamId}/members/layout`, {
+    slots,
+  });
 }
 
 async function joinTeam(teamId: string, data: Recordable<any>) {
@@ -201,10 +190,10 @@ async function updateTeamMemberCovers(
   characterId: string,
   data: Jx3TeamApi.UpdateMemberCoversPayload,
 ) {
-  return requestClient.request(
-    `/jx3/teams/${teamId}/members/${characterId}/covers`,
-    { data, method: 'PATCH' },
-  );
+  return requestClient.request(`/jx3/teams/${teamId}/members/${characterId}/covers`, {
+    data,
+    method: 'PATCH',
+  });
 }
 
 async function getTeamMemberAccount(teamId: string, characterId: string) {

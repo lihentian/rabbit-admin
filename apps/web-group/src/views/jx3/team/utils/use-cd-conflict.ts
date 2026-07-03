@@ -13,5 +13,5 @@ export function getCdConflictMessage(
   team: Pick<Jx3TeamApi.Team, 'cdLimitEnabled'>,
 ): string | undefined {
   if (!team.cdLimitEnabled || !character.cdConflict) return undefined;
-  return `已在「${character.cdConflict}」同副本进行中`;
+  return `已在「${character.cdConflict}」中`;
 }

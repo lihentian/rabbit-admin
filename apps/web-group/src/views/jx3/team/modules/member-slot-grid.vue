@@ -4,10 +4,12 @@ import { computed } from 'vue';
 import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
+import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
 import { MEMBER_CARD_HEIGHT, SQUAD_COLUMN_MAX_WIDTH } from './member-card.constants';
 import MemberCard from './member-card.vue';
 
 export interface SlotMember {
+  cdConflict?: string;
   characterId: string;
   characterName: string;
   characterSpecId: string;
@@ -17,6 +19,7 @@ export interface SlotMember {
   coversTeam?: boolean;
   isCw?: boolean;
   sectId?: string;
+  sectName?: string;
   serverName?: string;
   specAlias?: string;
   specIcon?: null | string;
@@ -29,6 +32,11 @@ const props = defineProps<{
   playerCount: number;
   readonly?: boolean;
   slots: Record<number, null | SlotMember>;
+  teamContext?: {
+    cdLimitEnabled: boolean;
+    dungeonId: string;
+    id: string;
+  };
   teamId: string;
 }>();
 
@@ -86,7 +94,7 @@ const slottedMembers = computed(() =>
   Object.values(props.slots).filter((m): m is SlotMember => !!m),
 );
 
-function findHolders(key: 'coversBigIron' | 'coversSmallIron' | 'coversTeam'): string[] {
+function findHolders(key: 'coversBigIron' | 'coversSmallIron'): string[] {
   return slottedMembers.value.filter((m) => m[key]).map((m) => m.characterName);
 }
 
@@ -95,9 +103,16 @@ function formatHolders(names: string[]): string {
   return names.join('、');
 }
 
+function formatCoverTeamHolder(member: SlotMember): string {
+  const sect = member.sectName?.trim();
+  return sect ? `${sect}-${member.characterName}` : member.characterName;
+}
+
 const smallIronHolder = computed(() => formatHolders(findHolders('coversSmallIron')));
 const bigIronHolder = computed(() => formatHolders(findHolders('coversBigIron')));
-const teamCoverHolders = computed(() => formatHolders(findHolders('coversTeam')));
+const teamCoverHolders = computed(() =>
+  formatHolders(slottedMembers.value.filter((m) => m.coversTeam).map(formatCoverTeamHolder)),
+);
 const teamCoverTitle = computed(() => teamCoverHolders.value || undefined);
 
 function onPickup(joinSort: number, event: PointerEvent) {
@@ -134,6 +149,16 @@ function onCoversUpdated(
 ) {
   emit('coversUpdated', joinSort, payload);
 }
+
+function resolveCdConflict(member: SlotMember) {
+  if (!props.teamContext) return false;
+  return hasCdConflict(member, props.teamContext);
+}
+
+function resolveCdConflictMessage(member: SlotMember) {
+  if (!props.teamContext) return undefined;
+  return getCdConflictMessage(member, props.teamContext);
+}
 </script>
 
 <template>
@@ -155,6 +180,8 @@ function onCoversUpdated(
           <MemberCard
             v-if="slot.member"
             :character="slot.member"
+            :cd-conflict="resolveCdConflict(slot.member)"
+            :cd-conflict-message="resolveCdConflictMessage(slot.member)"
             :disabled="readonly"
             :dragging="draggingFromJoinSort === slot.joinSort"
             :menu-context="buildMenuContext(slot.member)"
@@ -251,7 +278,6 @@ function onCoversUpdated(
 }
 
 .team-summary-value--team {
-  font-size: 13px;
   line-height: 1.5;
 }
 
