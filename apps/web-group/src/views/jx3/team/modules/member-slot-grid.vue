@@ -5,8 +5,8 @@ import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
 import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
-import { MEMBER_CARD_HEIGHT, SQUAD_COLUMN_MAX_WIDTH } from './member-card.constants';
-import MemberCard from './member-card.vue';
+import { SQUAD_COLUMN_MAX_WIDTH } from './member-card.constants';
+import SlotCell from './slot-cell.vue';
 
 export interface SlotMember {
   cdConflict?: string;
@@ -23,6 +23,24 @@ export interface SlotMember {
   serverName?: string;
   specAlias?: string;
   specIcon?: null | string;
+}
+
+interface SlotMenuContext {
+  allMembers: {
+    characterId: string;
+    characterName: string;
+    coversBigIron?: boolean;
+    coversSmallIron?: boolean;
+    coversTeam?: boolean;
+    sectId?: string;
+  }[];
+  characterId: string;
+  coversBigIron?: boolean;
+  coversSmallIron?: boolean;
+  coversTeam?: boolean;
+  readonly?: boolean;
+  sectId?: string;
+  teamId: string;
 }
 
 const props = defineProps<{
@@ -94,6 +112,34 @@ const slottedMembers = computed(() =>
   Object.values(props.slots).filter((m): m is SlotMember => !!m),
 );
 
+const cdLimitEnabled = computed(() => !!props.teamContext?.cdLimitEnabled);
+
+const menuContextByJoinSort = computed(() => {
+  const allMembers = slottedMembers.value.map((item) => ({
+    characterId: item.characterId,
+    characterName: item.characterName,
+    coversBigIron: item.coversBigIron,
+    coversSmallIron: item.coversSmallIron,
+    coversTeam: item.coversTeam,
+    sectId: item.sectId,
+  }));
+  const map = new Map<number, SlotMenuContext>();
+  for (const [joinSortStr, member] of Object.entries(props.slots)) {
+    if (!member) continue;
+    map.set(Number(joinSortStr), {
+      allMembers,
+      characterId: member.characterId,
+      coversBigIron: member.coversBigIron,
+      coversSmallIron: member.coversSmallIron,
+      coversTeam: member.coversTeam,
+      readonly: props.readonly,
+      sectId: member.sectId,
+      teamId: props.teamId,
+    });
+  }
+  return map;
+});
+
 function findHolders(key: 'coversBigIron' | 'coversSmallIron'): string[] {
   return slottedMembers.value.filter((m) => m[key]).map((m) => m.characterName);
 }
@@ -119,26 +165,6 @@ function onPickup(joinSort: number, event: PointerEvent) {
   emit('pickup', joinSort, event);
 }
 
-function buildMenuContext(member: SlotMember) {
-  return {
-    allMembers: slottedMembers.value.map((item) => ({
-      characterId: item.characterId,
-      characterName: item.characterName,
-      coversBigIron: item.coversBigIron,
-      coversSmallIron: item.coversSmallIron,
-      coversTeam: item.coversTeam,
-      sectId: item.sectId,
-    })),
-    characterId: member.characterId,
-    coversBigIron: member.coversBigIron,
-    coversSmallIron: member.coversSmallIron,
-    coversTeam: member.coversTeam,
-    readonly: props.readonly,
-    sectId: member.sectId,
-    teamId: props.teamId,
-  };
-}
-
 function onCoversUpdated(
   joinSort: number,
   payload: {
@@ -151,13 +177,13 @@ function onCoversUpdated(
 }
 
 function resolveCdConflict(member: SlotMember) {
-  if (!props.teamContext) return false;
-  return hasCdConflict(member, props.teamContext);
+  if (!cdLimitEnabled.value) return false;
+  return hasCdConflict(member, props.teamContext!);
 }
 
 function resolveCdConflictMessage(member: SlotMember) {
-  if (!props.teamContext) return undefined;
-  return getCdConflictMessage(member, props.teamContext);
+  if (!cdLimitEnabled.value || !member.cdConflict) return undefined;
+  return getCdConflictMessage(member, props.teamContext!);
 }
 </script>
 
@@ -166,37 +192,21 @@ function resolveCdConflictMessage(member: SlotMember) {
     <div class="grid gap-2" :style="squadGridStyle">
       <div v-for="column in columns" :key="column.col" class="space-y-1">
         <div class="text-center text-xs text-muted-foreground">{{ column.label }}</div>
-        <div
+        <SlotCell
           v-for="slot in column.slots"
           :key="slot.joinSort"
-          class="relative rounded border border-dashed border-border/70 bg-background/50 p-1 transition-colors"
-          :style="{ minHeight: `${MEMBER_CARD_HEIGHT + 8}px` }"
-          :class="{
-            'border-primary/50': slot.member,
-            'border-primary bg-primary/10': dropTargetJoinSort === slot.joinSort,
-          }"
-          :data-join-sort="slot.joinSort"
-        >
-          <MemberCard
-            v-if="slot.member"
-            :character="slot.member"
-            :cd-conflict="resolveCdConflict(slot.member)"
-            :cd-conflict-message="resolveCdConflictMessage(slot.member)"
-            :disabled="readonly"
-            :dragging="draggingFromJoinSort === slot.joinSort"
-            :menu-context="buildMenuContext(slot.member)"
-            @covers-updated="(payload) => onCoversUpdated(slot.joinSort, payload)"
-            @pickup="(e) => onPickup(slot.joinSort, e)"
-            @view-account="emit('viewAccount', slot.member.characterId)"
-          />
-          <div
-            v-else
-            class="flex flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground"
-            :style="{ minHeight: `${MEMBER_CARD_HEIGHT}px` }"
-          >
-            <span>{{ slot.joinSort }} · {{ $t('jx3.team.emptySlot') }}</span>
-          </div>
-        </div>
+          :cd-conflict="slot.member ? resolveCdConflict(slot.member) : false"
+          :cd-conflict-message="slot.member ? resolveCdConflictMessage(slot.member) : undefined"
+          :is-dragging="draggingFromJoinSort === slot.joinSort"
+          :is-drop-target="dropTargetJoinSort === slot.joinSort"
+          :join-sort="slot.joinSort"
+          :member="slot.member"
+          :menu-context="menuContextByJoinSort.get(slot.joinSort)"
+          :readonly="readonly"
+          @covers-updated="(payload: { coversBigIron: boolean; coversSmallIron: boolean; coversTeam: boolean }) => onCoversUpdated(slot.joinSort, payload)"
+          @pickup="(e: PointerEvent) => onPickup(slot.joinSort, e)"
+          @view-account="emit('viewAccount', $event)"
+        />
       </div>
     </div>
     <div class="team-summary mt-2 shrink-0" :style="summaryStyle">

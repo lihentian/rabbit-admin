@@ -3,7 +3,7 @@ import type { SlotMember } from './modules/member-slot-grid.vue';
 
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
-import { computed, h, onActivated, onBeforeUnmount, reactive, ref } from 'vue';
+import { computed, h, nextTick, onActivated, onBeforeUnmount, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -50,8 +50,6 @@ const { setTabTitle } = useTabs();
 
 const teamId = computed(() => String(route.query.teamId ?? ''));
 
-const isPageActive = ref(false);
-
 const teamRow = ref<Jx3TeamApi.Team>();
 const availableSpecDict = ref<Jx3TeamApi.AvailableCharacterSpecDict>({});
 const available = ref<Jx3TeamApi.AvailableCharacterSlim[]>([]);
@@ -88,26 +86,50 @@ const slottedCharacterIds = computed(
     ),
 );
 
-const dragPreview = ref<{
-  character: Pick<
-    Jx3TeamApi.AvailableCharacter,
-    | 'accountRemark'
-    | 'characterName'
-    | 'combatPower'
-    | 'isCw'
-    | 'serverName'
-    | 'specAlias'
-    | 'specIcon'
-  >;
-  fromPool: boolean;
-  x: number;
-  y: number;
-}>();
+type DragPreviewCharacter = Pick<
+  Jx3TeamApi.AvailableCharacter,
+  | 'accountRemark'
+  | 'characterName'
+  | 'combatPower'
+  | 'isCw'
+  | 'serverName'
+  | 'specAlias'
+  | 'specIcon'
+>;
 
-function resolveDragPreviewCharacter(payload: DragPayload) {
+const dragPreview = ref<{
+  character: DragPreviewCharacter;
+  fromPool: boolean;
+}>();
+const dragPreviewEl = ref<HTMLElement | null>(null);
+
+const dragPreviewWidth = computed(() =>
+  dragPreview.value?.fromPool ? `${POOL_CARD_MIN_WIDTH}px` : `${SQUAD_COLUMN_MAX_WIDTH - 8}px`,
+);
+
+const teamContext = computed(() => {
+  const team = teamRow.value;
+  if (!team) return undefined;
+  return {
+    cdLimitEnabled: !!team.cdLimitEnabled,
+    dungeonId: team.dungeonId,
+    id: teamId.value,
+  };
+});
+
+function resolveDragPreviewCharacter(payload: DragPayload): DragPreviewCharacter | undefined {
   if (payload.source === 'slot' && payload.fromJoinSort) {
     const member = slots[payload.fromJoinSort];
-    if (member) return member;
+    if (member) {
+      return {
+        characterName: member.characterName,
+        combatPower: member.combatPower,
+        isCw: !!member.isCw,
+        serverName: member.serverName,
+        specAlias: member.specAlias ?? '',
+        specIcon: member.specIcon ?? '',
+      };
+    }
   }
   const character = available.value.find((c) => c.characterId === payload.characterId);
   if (!character) return;
@@ -123,11 +145,11 @@ function resolveDragPreviewCharacter(payload: DragPayload) {
     isCw: !!(spec?.isCw ?? character.isCw),
     serverName: character.serverName,
     specAlias: meta.specAlias,
-    specIcon: meta.specIcon,
+    specIcon: meta.specIcon ?? '',
   };
 }
 
-function updateDragPreview(payload: DragPayload, clientX: number, clientY: number) {
+function startDragPreview(payload: DragPayload) {
   const character = resolveDragPreviewCharacter(payload);
   if (!character) {
     dragPreview.value = undefined;
@@ -136,9 +158,13 @@ function updateDragPreview(payload: DragPayload, clientX: number, clientY: numbe
   dragPreview.value = {
     character,
     fromPool: payload.source === 'pool',
-    x: clientX,
-    y: clientY,
   };
+}
+
+function updatePreviewPosition(clientX: number, clientY: number) {
+  const el = dragPreviewEl.value;
+  if (!el) return;
+  el.style.transform = `translate(${clientX}px, ${clientY}px) translate(-50%, -50%)`;
 }
 
 function resetSlots(playerCount: number) {
@@ -217,6 +243,8 @@ let pendingPayload: DragPayload | null = null;
 let pointerStartX = 0;
 let pointerStartY = 0;
 let pointerDragStarted = false;
+let rafId: null | number = null;
+let latestPointerEvent: null | PointerEvent = null;
 
 function resolveDropTarget(clientX: number, clientY: number) {
   const el = document.elementFromPoint(clientX, clientY);
@@ -233,13 +261,58 @@ function resolveDropTarget(clientX: number, clientY: number) {
 function updateDropTarget(clientX: number, clientY: number) {
   const target = resolveDropTarget(clientX, clientY);
   if (target?.type === 'slot') {
-    dropTargetJoinSort.value = target.joinSort;
+    if (dropTargetJoinSort.value !== target.joinSort) {
+      dropTargetJoinSort.value = target.joinSort;
+    }
     return;
   }
-  dropTargetJoinSort.value = undefined;
+  if (dropTargetJoinSort.value !== undefined) {
+    dropTargetJoinSort.value = undefined;
+  }
+}
+
+function cancelPointerFrame() {
+  if (rafId !== null) {
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+  latestPointerEvent = null;
+}
+
+function processPointerFrame() {
+  rafId = null;
+  const event = latestPointerEvent;
+  if (!event || activePointerId !== event.pointerId) return;
+
+  if (!pointerDragStarted) {
+    const dx = event.clientX - pointerStartX;
+    const dy = event.clientY - pointerStartY;
+    if (Math.hypot(dx, dy) < POINTER_DRAG_THRESHOLD) return;
+    pointerDragStarted = true;
+    dragging.value = pendingPayload;
+    if (pendingPayload) {
+      startDragPreview(pendingPayload);
+      void nextTick(() => {
+        updatePreviewPosition(event.clientX, event.clientY);
+      });
+    }
+  }
+
+  if (pointerDragStarted && dragging.value) {
+    updatePreviewPosition(event.clientX, event.clientY);
+  }
+
+  updateDropTarget(event.clientX, event.clientY);
+}
+
+function schedulePointerFrame(event: PointerEvent) {
+  latestPointerEvent = event;
+  if (rafId !== null) return;
+  rafId = requestAnimationFrame(processPointerFrame);
 }
 
 function cleanupPointerDrag() {
+  cancelPointerFrame();
   activePointerId = null;
   pendingPayload = null;
   pointerDragStarted = false;
@@ -253,23 +326,7 @@ function cleanupPointerDrag() {
 
 function onWindowPointerMove(event: PointerEvent) {
   if (activePointerId !== event.pointerId) return;
-
-  if (!pointerDragStarted) {
-    const dx = event.clientX - pointerStartX;
-    const dy = event.clientY - pointerStartY;
-    if (Math.hypot(dx, dy) < POINTER_DRAG_THRESHOLD) return;
-    pointerDragStarted = true;
-    dragging.value = pendingPayload;
-    if (pendingPayload) {
-      updateDragPreview(pendingPayload, event.clientX, event.clientY);
-    }
-  }
-
-  if (pointerDragStarted && dragging.value) {
-    updateDragPreview(dragging.value, event.clientX, event.clientY);
-  }
-
-  updateDropTarget(event.clientX, event.clientY);
+  schedulePointerFrame(event);
 }
 
 function onWindowPointerUp(event: PointerEvent) {
@@ -578,15 +635,7 @@ function onBack() {
           :player-count="teamRow?.playerCount ?? 25"
           :readonly="readonly"
           :slots="slots"
-          :team-context="
-            teamRow
-              ? {
-                  cdLimitEnabled: !!teamRow.cdLimitEnabled,
-                  dungeonId: teamRow.dungeonId,
-                  id: teamId,
-                }
-              : undefined
-          "
+          :team-context="teamContext"
           :team-id="teamId"
           @covers-updated="onCoversUpdated"
           @pickup="onSlotPickup"
@@ -602,15 +651,7 @@ function onBack() {
           :dragging-source="dragging?.source"
           :slotted-character-ids="slottedCharacterIds"
           :spec-dict="availableSpecDict"
-          :team-context="
-            teamRow
-              ? {
-                  cdLimitEnabled: !!teamRow.cdLimitEnabled,
-                  dungeonId: teamRow.dungeonId,
-                  id: teamId,
-                }
-              : undefined
-          "
+          :team-context="teamContext"
           @pickup="onPoolPickup"
         />
       </div>
@@ -618,17 +659,13 @@ function onBack() {
 
     <Teleport to="body">
       <div
-        v-if="dragPreview"
-        class="pointer-events-none fixed z-[9999] -translate-x-1/2 -translate-y-1/2 opacity-90 shadow-lg"
-        :style="{
-          left: `${dragPreview.x}px`,
-          top: `${dragPreview.y}px`,
-          width: dragPreview.fromPool
-            ? `${POOL_CARD_MIN_WIDTH}px`
-            : `${SQUAD_COLUMN_MAX_WIDTH - 8}px`,
-        }"
+        v-show="dragPreview"
+        ref="dragPreviewEl"
+        class="pointer-events-none fixed left-0 top-0 z-[9999] opacity-90 shadow-lg"
+        :style="{ width: dragPreviewWidth }"
       >
         <MemberCard
+          v-if="dragPreview"
           :character="dragPreview.character"
           :show-account-remark="dragPreview.fromPool"
           disabled

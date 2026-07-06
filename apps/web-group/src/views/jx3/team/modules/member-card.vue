@@ -135,21 +135,16 @@ function onPointerDown(event: PointerEvent) {
       >
         <div class="member-card-icon shrink-0">
           <img
-            v-if="character.specIcon"
             :alt="character.specAlias"
-            class="size-7 object-contain"
+            class="size-8 object-contain"
             draggable="false"
             :src="character.specIcon"
           />
-          <span v-else class="member-card-text flex size-7 items-center justify-center text-xs">
-            {{ character.specAlias?.slice(0, 1) ?? '?' }}
-          </span>
         </div>
         <span v-if="character.isCw" class="member-card-cw select-none" aria-hidden="true">橙</span>
       </div>
       <div
-        class="flex min-w-0 flex-1 flex-col justify-between self-stretch select-none py-1 pb-1 pl-8"
-        :class="{ 'pr-6': cdConflict }"
+        class="flex min-w-0 flex-1 flex-col justify-between self-stretch select-none py-1 pb-1 pl-9"
       >
         <div class="member-card-text truncate text-[16px] font-semibold leading-tight">
           {{ character.characterName }}
