@@ -12,7 +12,7 @@ const dynamicRouteFiles = import.meta.glob('./modules/**/*.ts', {
 // const externalRouteFiles = import.meta.glob('./external/**/*.ts', { eager: true });
 // const staticRouteFiles = import.meta.glob('./static/**/*.ts', { eager: true });
 
-/** 动态路由（仅前端补充：仪表盘、hideInMenu 等；业务菜单由 /menus/routes 提供） */
+/** 动态路由 */
 const dynamicRoutes: RouteRecordRaw[] = mergeRouteModules(dynamicRouteFiles);
 
 /** 外部路由列表，访问这些页面可以不需要Layout，可能用于内嵌在别的系统(不会显示在菜单中) */
@@ -34,5 +34,4 @@ const coreRouteNames = traverseTreeValues(coreRoutes, (route) => route.name);
 
 /** 有权限校验的路由列表，包含动态路由和静态路由 */
 const accessRoutes = [...dynamicRoutes, ...staticRoutes];
-
 export { accessRoutes, coreRouteNames, routes };

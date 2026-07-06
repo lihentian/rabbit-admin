@@ -8,7 +8,7 @@ import { preferences } from '@vben/preferences';
 
 import { message } from 'antdv-next';
 
-import { getAllMenusApi } from '#/api/core/menu';
+import { getAllMenusApi } from '#/api';
 import { BasicLayout, IFrameView } from '#/layouts';
 import { $t } from '#/locales';
 
@@ -20,8 +20,6 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   const layoutMap: ComponentRecordType = {
     BasicLayout,
     IFrameView,
-    // 后端 sys_menu 目录（type=C）component 字段为 Layout
-    Layout: BasicLayout,
   };
 
   return await generateAccessible(preferences.app.accessMode, {
