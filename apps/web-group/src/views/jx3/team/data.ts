@@ -218,6 +218,13 @@ export function useMemberColumns(
     },
     {
       align: 'left',
+      field: 'remark',
+      formatter: ({ cellValue }) => cellValue?.trim() || '—',
+      title: $t('jx3.team.accountRemark'),
+      minWidth: 120,
+    },
+    {
+      align: 'left',
       field: 'serverName',
       formatter: ({ row }) => {
         const parts = [row.gameArea, row.serverName || '—'].filter(Boolean);

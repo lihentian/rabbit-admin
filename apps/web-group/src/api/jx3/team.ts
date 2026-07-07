@@ -40,6 +40,7 @@ export namespace Jx3TeamApi {
     joinType?: number;
     password?: string;
     position?: string;
+    remark?: null | string;
     sectId?: string;
     sectName?: string;
     serverName?: null | string;
