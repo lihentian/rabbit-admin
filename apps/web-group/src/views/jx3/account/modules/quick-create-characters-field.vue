@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { QuickCreateCharacterItem, QuickCreateSpecItem } from '#/utils/jx3/account-create';
 
-import { onMounted, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 import { Plus, X } from '@vben/icons';
 
@@ -19,8 +19,7 @@ const modelValue = defineModel<null | QuickCreateCharacterItem[]>({
   default: null,
 });
 
-const specDictStore = useJx3SpecDictStore();
-const { specOptionList: specOptions } = storeToRefs(specDictStore);
+const { specOptionList: specOptions } = storeToRefs(useJx3SpecDictStore());
 const serverOptionsMap = ref<Record<number, Array<{ label: string; value: string }>>>({});
 
 const gameAreaOptions = getGameAreaOptions();
@@ -33,10 +32,6 @@ function createEmptyCharacter(): QuickCreateCharacterItem {
     specs: [createEmptySpec()],
   };
 }
-
-onMounted(() => {
-  void specDictStore.ensureLoaded();
-});
 
 watch(
   () => modelValue.value?.map((item) => item.gameArea),
@@ -129,10 +124,7 @@ function resolveMainSectName(specs: QuickCreateSpecItem[]): null | string {
   for (const spec of specs) {
     if (!spec.specId) continue;
     const option = specOptions.value.find((item) => item.value === spec.specId);
-    if (
-      option?.sectName &&
-      !(EXTRA_SECT_NAMES as readonly string[]).includes(option.sectName)
-    ) {
+    if (option?.sectName && !(EXTRA_SECT_NAMES as readonly string[]).includes(option.sectName)) {
       return option.sectName;
     }
   }

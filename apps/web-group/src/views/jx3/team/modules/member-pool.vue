@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { useElementSize, useLocalStorage, useVirtualList } from '@vueuse/core';
 import { Input, Spin } from 'antdv-next';
@@ -40,8 +40,7 @@ const emit = defineEmits<{
 const POOL_ATTR_FILTER_CD_KEY = 'jx3-team-pool-filter-cd';
 const POOL_ATTR_FILTER_CW_KEY = 'jx3-team-pool-filter-cw';
 
-const specDictStore = useJx3SpecDictStore();
-const { specDict, specOptions } = storeToRefs(specDictStore);
+const { specDict, specOptions } = storeToRefs(useJx3SpecDictStore());
 
 const scrollContainerRef = ref<HTMLElement | null>(null);
 const { width: scrollWidth } = useElementSize(scrollContainerRef);
@@ -96,10 +95,6 @@ watch(specFilterOptions, (options) => {
   if (specFilterId.value && !options.some((item) => item.specId === specFilterId.value)) {
     specFilterId.value = null;
   }
-});
-
-onMounted(() => {
-  void specDictStore.ensureLoaded();
 });
 
 function normalizePosition(position?: string): Exclude<PositionFilter, 'all'> {

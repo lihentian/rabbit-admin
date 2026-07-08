@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { computed } from 'vue';
 
 import { Plus, X } from '@vben/icons';
 
@@ -20,15 +20,12 @@ const modelValue = defineModel<null | TemplateSpecRuleItem[]>({ default: null })
 const specDictStore = useJx3SpecDictStore();
 const { specOptionList } = storeToRefs(specDictStore);
 
-const specOptions = ref<Array<{ label: string; value: number }>>([]);
-
-onMounted(async () => {
-  await specDictStore.ensureLoaded();
-  specOptions.value = specOptionList.value.map((item) => ({
+const specOptions = computed(() =>
+  specOptionList.value.map((item) => ({
     label: item.label,
     value: Number(item.value),
-  }));
-});
+  })),
+);
 
 function addRow() {
   const list = modelValue.value ? [...modelValue.value] : [];
@@ -85,7 +82,7 @@ function updateItem<K extends keyof TemplateSpecRuleItem>(
           <span class="text-muted-foreground text-sm">
             {{ $t('jx3.dungeonTemplate.isCw') }}
           </span>
-          <Switch :checked="!!item.isCw" @update:checked="(v) => updateItem(index, 'isCw', v)" />
+          <Switch :checked="!!item.isCw" @update:checked="(v) => updateItem(index, 'isCw', v === true)" />
         </div>
         <div class="ml-3 flex shrink-0 items-center gap-1">
           <Button danger size="small" @click="removeRow(index)">

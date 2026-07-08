@@ -28,11 +28,44 @@ function buildSpecDict(
 }
 
 export const useJx3SpecDictStore = defineStore('jx3-spec-dict', () => {
-  const specDict = ref<Jx3TeamApi.AvailableCharacterSpecDict>({});
-  const specOptionList = ref<Jx3SpecApi.SpecOption[]>([]);
+  const specDictData = ref<Jx3TeamApi.AvailableCharacterSpecDict>({});
+  const specOptionListData = ref<Jx3SpecApi.SpecOption[]>([]);
   const loaded = ref(false);
   const loading = ref(false);
-  let loadPromise: Promise<void> | null = null;
+
+  let loadTask: Promise<void> | undefined;
+
+  async function load(): Promise<void> {
+    if (loaded.value) return;
+    if (loadTask) return loadTask;
+
+    loadTask = (async () => {
+      loading.value = true;
+      try {
+        const list = await getSpecOptions();
+        specOptionListData.value = list;
+        specDictData.value = buildSpecDict(list);
+        loaded.value = true;
+      } catch {
+        // 鉴权失效或网络异常时不抛出
+        loadTask = undefined;
+      } finally {
+        loading.value = false;
+      }
+    })();
+
+    return loadTask;
+  }
+
+  async function refresh(): Promise<void> {
+    loaded.value = false;
+    loadTask = undefined;
+    await load();
+  }
+
+  const specDict = computed(() => specDictData.value);
+
+  const specOptionList = computed(() => specOptionListData.value);
 
   const specOptions = computed(() =>
     Object.entries(specDict.value).map(([specId, meta]) => ({
@@ -43,38 +76,40 @@ export const useJx3SpecDictStore = defineStore('jx3-spec-dict', () => {
     })),
   );
 
-  async function refresh(): Promise<void> {
-    loading.value = true;
-    try {
-      const list = await getSpecOptions();
-      specOptionList.value = list;
-      specDict.value = buildSpecDict(list);
-      loaded.value = true;
-    } finally {
-      loading.value = false;
-      loadPromise = null;
-    }
-  }
-
-  async function ensureLoaded(): Promise<void> {
-    if (loaded.value) return;
-    if (loadPromise) {
-      await loadPromise;
-      return;
-    }
-    loadPromise = refresh();
-    await loadPromise;
+  function getSpecMeta(specId: string): Jx3TeamApi.AvailableCharacterSpecMeta {
+    return (
+      specDictData.value[specId] ?? {
+        specAlias: specId,
+        specIcon: '',
+        sectId: '',
+        sectName: '',
+        position: '',
+      }
+    );
   }
 
   function removeSpec(id: string): void {
-    if (!specDict.value[id]) return;
-    const next = { ...specDict.value };
+    if (!specDictData.value[id]) return;
+    const next = { ...specDictData.value };
     delete next[id];
-    specDict.value = next;
+    specDictData.value = next;
+    specOptionListData.value = specOptionListData.value.filter((item) => item.value !== id);
   }
 
+  function $reset() {
+    specDictData.value = {};
+    specOptionListData.value = [];
+    loaded.value = false;
+    loading.value = false;
+    loadTask = undefined;
+  }
+
+  void load();
+
   return {
-    ensureLoaded,
+    $reset,
+    getSpecMeta,
+    load,
     loaded,
     loading,
     refresh,

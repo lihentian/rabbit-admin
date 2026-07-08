@@ -67,8 +67,7 @@ const accountModalRef = ref<InstanceType<typeof MemberAccountModal>>();
 const teamSwitcherRef = ref<InstanceType<typeof TeamSwitcher>>();
 
 const { canCreate, canSaveLayout, canUsePool } = useJx3TeamAccess();
-const specDictStore = useJx3SpecDictStore();
-const { specDict } = storeToRefs(specDictStore);
+const { specDict } = storeToRefs(useJx3SpecDictStore());
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -240,7 +239,6 @@ async function loadTeamLayout() {
   if (!teamId.value) return;
   loading.value = true;
   try {
-    void specDictStore.ensureLoaded();
     const [team, members] = await Promise.all([
       getTeamForm(teamId.value),
       getTeamMembers(teamId.value),
