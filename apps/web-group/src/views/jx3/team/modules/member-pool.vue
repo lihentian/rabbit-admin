@@ -4,10 +4,11 @@ import type { Jx3TeamApi } from '#/api/jx3/team';
 import { computed, onMounted, ref, watch } from 'vue';
 
 import { useElementSize, useLocalStorage, useVirtualList } from '@vueuse/core';
-import { Input } from 'antdv-next';
+import { Input, Spin } from 'antdv-next';
+import { storeToRefs } from 'pinia';
 
-import { getSpecOptions } from '#/api/jx3/spec';
 import { $t } from '#/locales';
+import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import { enrichAvailableSpec } from '../utils/enrich-available-character';
 import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
@@ -20,20 +21,13 @@ import MemberCard from './member-card.vue';
 
 type PositionFilter = 'all' | 'd' | 'n' | 't';
 
-interface SpecFilterOption {
-  position?: string;
-  specAlias?: string;
-  specIcon?: null | string;
-  specId: string;
-}
-
 const props = defineProps<{
   characters: Jx3TeamApi.AvailableCharacterSlim[];
   draggingCharacterId?: string;
   draggingCharacterSpecId?: string;
   draggingSource?: 'pool' | 'slot';
+  loading?: boolean;
   slottedCharacterIds: Set<string>;
-  specDict: Jx3TeamApi.AvailableCharacterSpecDict;
   teamContext?: {
     cdLimitEnabled: boolean;
     dungeonId: string;
@@ -46,6 +40,9 @@ const emit = defineEmits<{
 const POOL_ATTR_FILTER_CD_KEY = 'jx3-team-pool-filter-cd';
 const POOL_ATTR_FILTER_CW_KEY = 'jx3-team-pool-filter-cw';
 
+const specDictStore = useJx3SpecDictStore();
+const { specDict, specOptions } = storeToRefs(specDictStore);
+
 const scrollContainerRef = ref<HTMLElement | null>(null);
 const { width: scrollWidth } = useElementSize(scrollContainerRef);
 
@@ -53,7 +50,6 @@ const positionFilter = ref<PositionFilter>('all');
 const specFilterId = ref<null | string>(null);
 const filterCd = useLocalStorage(POOL_ATTR_FILTER_CD_KEY, true);
 const filterCw = useLocalStorage(POOL_ATTR_FILTER_CW_KEY, false);
-const allSpecOptions = ref<SpecFilterOption[]>([]);
 const searchKeyword = ref('');
 
 const positionOptions = computed(() => [
@@ -67,7 +63,7 @@ function toPoolEntry(
   char: Jx3TeamApi.AvailableCharacterSlim,
   spec: Jx3TeamApi.AvailableCharacterSpecSlim,
 ): Jx3TeamApi.AvailableCharacter {
-  return enrichAvailableSpec(char, spec, props.specDict);
+  return enrichAvailableSpec(char, spec, specDict.value);
 }
 
 const poolCharacters = computed(() => {
@@ -79,7 +75,7 @@ const poolCharacters = computed(() => {
         specId: char.specId,
         combatPower: char.combatPower,
         isCw: char.isCw,
-      }, props.specDict));
+      }, specDict.value));
       continue;
     }
     for (const spec of char.specs) {
@@ -90,8 +86,8 @@ const poolCharacters = computed(() => {
 });
 
 const specFilterOptions = computed(() => {
-  if (positionFilter.value === 'all') return allSpecOptions.value;
-  return allSpecOptions.value.filter(
+  if (positionFilter.value === 'all') return specOptions.value;
+  return specOptions.value.filter(
     (item) => normalizePosition(item.position) === positionFilter.value,
   );
 });
@@ -102,14 +98,8 @@ watch(specFilterOptions, (options) => {
   }
 });
 
-onMounted(async () => {
-  const list = await getSpecOptions();
-  allSpecOptions.value = list.map((item) => ({
-    specId: item.value,
-    specAlias: item.specAlias ?? item.label,
-    specIcon: item.specIcon,
-    position: item.position,
-  }));
+onMounted(() => {
+  void specDictStore.ensureLoaded();
 });
 
 function normalizePosition(position?: string): Exclude<PositionFilter, 'all'> {
@@ -207,7 +197,7 @@ function toggleSpecFilter(specId: string) {
   specFilterId.value = specFilterId.value === specId ? null : specId;
 }
 
-function specFilterTitle(spec: SpecFilterOption) {
+function specFilterTitle(spec: (typeof specOptions.value)[number]) {
   return spec.specAlias ?? spec.specId;
 }
 
@@ -231,7 +221,6 @@ function poolAttrFilterBtnClass(active: boolean) {
 <template>
   <div class="flex h-full min-h-0 w-full min-w-0 flex-col">
     <div class="mb-2 shrink-0 space-y-2">
-      <!-- <div class="text-sm font-medium">{{ $t('jx3.team.characterId') }}</div> -->
       <div class="flex items-center gap-2">
         <Input
           v-model:value="searchKeyword"
@@ -259,7 +248,6 @@ function poolAttrFilterBtnClass(active: boolean) {
         </div>
       </div>
       <div v-if="specFilterOptions.length" class="space-y-1">
-        <!-- <div class="text-xs text-muted-foreground">{{ $t('jx3.team.poolSpecFilter') }}</div> -->
         <div class="grid grid-cols-[repeat(auto-fill,2rem)]">
           <button
             v-for="spec in specFilterOptions"
@@ -304,23 +292,29 @@ function poolAttrFilterBtnClass(active: boolean) {
       </div>
     </div>
     <div
-      class="pool-list-panel flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-border/60"
+      class="pool-list-panel relative flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-border/60"
       data-drop-pool
     >
       <div
-        v-if="!poolCharacters.length"
+        v-if="loading"
+        class="absolute inset-0 z-10 flex items-center justify-center bg-background/60"
+      >
+        <Spin />
+      </div>
+      <div
+        v-if="!loading && !poolCharacters.length"
         class="flex flex-1 items-center justify-center text-xs text-muted-foreground"
       >
         —
       </div>
       <div
-        v-else-if="!filteredPoolCharacters.length"
+        v-else-if="!loading && !filteredPoolCharacters.length"
         class="flex flex-1 items-center justify-center px-2 text-center text-xs text-muted-foreground"
       >
         {{ $t('jx3.team.poolSearchEmpty') }}
       </div>
       <div
-        v-else
+        v-else-if="!loading"
         class="pool-list-body pool-list-scroll h-full min-h-0 w-full px-2 py-2"
         :ref="bindScrollContainer"
         :style="containerProps.style"

@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import type { Jx3SpecApi } from '#/api/jx3/spec';
 import type { QuickCreateCharacterItem, QuickCreateSpecItem } from '#/utils/jx3/account-create';
 
 import { onMounted, ref, watch } from 'vue';
@@ -7,11 +6,12 @@ import { onMounted, ref, watch } from 'vue';
 import { Plus, X } from '@vben/icons';
 
 import { Button, Card, Collapse, CollapsePanel, Input, Select, Switch } from 'antdv-next';
+import { storeToRefs } from 'pinia';
 
 import { getGameServerOptions } from '#/api/jx3/game-server';
-import { getSpecOptions } from '#/api/jx3/spec';
 import CombatPowerInput from '#/components/jx3/CombatPowerInput.vue';
 import { $t } from '#/locales';
+import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 import { createEmptySpec } from '#/utils/jx3/account-create';
 import { EXTRA_SECT_NAMES, getGameAreaOptions } from '#/utils/jx3/jx';
 
@@ -19,7 +19,8 @@ const modelValue = defineModel<null | QuickCreateCharacterItem[]>({
   default: null,
 });
 
-const specOptions = ref<Jx3SpecApi.SpecOption[]>([]);
+const specDictStore = useJx3SpecDictStore();
+const { specOptionList: specOptions } = storeToRefs(specDictStore);
 const serverOptionsMap = ref<Record<number, Array<{ label: string; value: string }>>>({});
 
 const gameAreaOptions = getGameAreaOptions();
@@ -33,8 +34,8 @@ function createEmptyCharacter(): QuickCreateCharacterItem {
   };
 }
 
-onMounted(async () => {
-  specOptions.value = await getSpecOptions();
+onMounted(() => {
+  void specDictStore.ensureLoaded();
 });
 
 watch(

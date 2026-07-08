@@ -10,6 +10,7 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
 
 import { Button, message, Modal } from 'antdv-next';
+import { storeToRefs } from 'pinia';
 
 import {
   getTeamAvailableCharacters,
@@ -20,6 +21,7 @@ import {
 } from '#/api/jx3/team';
 import { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 import { $t } from '#/locales';
+import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import Form from './modules/form.vue';
 import MemberAccountModal from './modules/member-account-modal.vue';
@@ -51,12 +53,13 @@ const { setTabTitle } = useTabs();
 const teamId = computed(() => String(route.query.teamId ?? ''));
 
 const teamRow = ref<Jx3TeamApi.Team>();
-const availableSpecDict = ref<Jx3TeamApi.AvailableCharacterSpecDict>({});
 const available = ref<Jx3TeamApi.AvailableCharacterSlim[]>([]);
+const latestMembers = ref<Jx3TeamApi.TeamMember[]>([]);
 const slots = reactive<Record<number, null | SlotMember>>({});
 const dragging = ref<DragPayload | null>(null);
 const dropTargetJoinSort = ref<number>();
 const loading = ref(false);
+const poolLoading = ref(false);
 const saving = ref(false);
 const teamsLoaded = ref(false);
 const hasActiveTeams = ref(false);
@@ -64,6 +67,8 @@ const accountModalRef = ref<InstanceType<typeof MemberAccountModal>>();
 const teamSwitcherRef = ref<InstanceType<typeof TeamSwitcher>>();
 
 const { canCreate, canSaveLayout, canUsePool } = useJx3TeamAccess();
+const specDictStore = useJx3SpecDictStore();
+const { specDict } = storeToRefs(specDictStore);
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -137,7 +142,7 @@ function resolveDragPreviewCharacter(payload: DragPayload): DragPreviewCharacter
     character.specs.find((s) => s.characterSpecId === payload.characterSpecId) ??
     character.specs[0];
   const specId = spec?.specId ?? character.specId;
-  const meta = getSpecMeta(availableSpecDict.value, specId);
+  const meta = getSpecMeta(specDict.value, specId);
   return {
     accountRemark: character.accountRemark,
     characterName: character.characterName,
@@ -185,7 +190,7 @@ function toSlotMember(
 ): SlotMember {
   const spec = char.specs.find((s) => s.characterSpecId === characterSpecId) ?? char.specs[0];
   const specId = spec?.specId ?? char.specId;
-  const meta = getSpecMeta(availableSpecDict.value, specId);
+  const meta = getSpecMeta(specDict.value, specId);
   return {
     cdConflict: char.cdConflict,
     characterId: char.characterId,
@@ -204,34 +209,74 @@ function toSlotMember(
   };
 }
 
-async function loadData() {
+function toSlotMemberFromTeamMember(member: Jx3TeamApi.TeamMember): SlotMember {
+  return {
+    characterId: member.characterId,
+    characterName: member.characterName ?? '',
+    characterSpecId: member.characterSpecId ?? '',
+    combatPower: member.combatPower ?? 0,
+    coversSmallIron: !!member.coversSmallIron,
+    coversBigIron: !!member.coversBigIron,
+    coversTeam: !!member.coversTeam,
+    sectId: member.sectId,
+    sectName: member.sectName,
+    serverName: member.serverName ?? undefined,
+    specAlias: member.specAlias,
+    specIcon: null,
+  };
+}
+
+function applySlotsFromMembers(members: Jx3TeamApi.TeamMember[]) {
+  for (const member of members) {
+    if (!member.joinSort) continue;
+    const char = available.value.find((item) => item.characterId === member.characterId);
+    slots[member.joinSort] = char
+      ? toSlotMember(char, member.characterSpecId, member)
+      : toSlotMemberFromTeamMember(member);
+  }
+}
+
+async function loadTeamLayout() {
   if (!teamId.value) return;
   loading.value = true;
   try {
-    const [team, members, pool] = await Promise.all([
+    void specDictStore.ensureLoaded();
+    const [team, members] = await Promise.all([
       getTeamForm(teamId.value),
       getTeamMembers(teamId.value),
-      getTeamAvailableCharacters(teamId.value),
     ]);
-    teamRow.value = {
-      ...team,
-      canManageMembers: pool.canManageMembers ?? team.canManageMembers ?? false,
-    };
+    latestMembers.value = members;
+    teamRow.value = team;
     updateTabTitle(team.teamName);
-    availableSpecDict.value = pool.specDict;
-    available.value = pool.characters;
     resetSlots(team.playerCount);
-
-    const charMap = new Map(pool.characters.map((c) => [c.characterId, c]));
-    for (const member of members) {
-      if (!member.joinSort) continue;
-      const char = charMap.get(member.characterId);
-      if (!char) continue;
-      slots[member.joinSort] = toSlotMember(char, member.characterSpecId, member);
-    }
+    applySlotsFromMembers(members);
   } finally {
     loading.value = false;
   }
+}
+
+async function loadPool() {
+  if (!teamId.value || !canUsePool.value) return;
+  poolLoading.value = true;
+  try {
+    const pool = await getTeamAvailableCharacters(teamId.value);
+    if (teamRow.value) {
+      teamRow.value = {
+        ...teamRow.value,
+        canManageMembers: pool.canManageMembers ?? teamRow.value.canManageMembers ?? false,
+      };
+    }
+    available.value = pool.characters;
+    applySlotsFromMembers(latestMembers.value);
+  } finally {
+    poolLoading.value = false;
+  }
+}
+
+async function loadData() {
+  if (!teamId.value) return;
+  await loadTeamLayout();
+  void loadPool();
 }
 
 onActivated(() => {
@@ -649,8 +694,8 @@ function onBack() {
           :dragging-character-id="dragging?.characterId"
           :dragging-character-spec-id="dragging?.characterSpecId"
           :dragging-source="dragging?.source"
+          :loading="poolLoading"
           :slotted-character-ids="slottedCharacterIds"
-          :spec-dict="availableSpecDict"
           :team-context="teamContext"
           @pickup="onPoolPickup"
         />

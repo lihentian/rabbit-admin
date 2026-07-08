@@ -13,6 +13,7 @@ import { Button, message } from 'antdv-next';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteSpec, getSpecList } from '#/api/jx3/spec';
 import { $t } from '#/locales';
+import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -30,9 +31,12 @@ function onCreate() {
   formModalApi.setData(null).open();
 }
 
+const specDictStore = useJx3SpecDictStore();
+
 function onDelete(row: Jx3SpecApi.Spec) {
-  deleteSpec(row.id).then(() => {
+  deleteSpec(row.id).then(async () => {
     message.success($t('ui.actionMessage.deleteSuccess', [row.specAlias]));
+    specDictStore.removeSpec(row.id);
     refreshGrid();
   });
 }

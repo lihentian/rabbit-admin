@@ -8,11 +8,13 @@ import { useVbenModal } from '@vben/common-ui';
 import { useVbenForm } from '#/adapter/form';
 import { createSpec, getSpecForm, updateSpec } from '#/api/jx3/spec';
 import { $t } from '#/locales';
+import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import { useFormSchema } from '../data';
 
 const emits = defineEmits(['success']);
 
+const specDictStore = useJx3SpecDictStore();
 const id = ref<string>();
 
 const [Form, formApi] = useVbenForm({
@@ -32,6 +34,7 @@ const [Modal, modalApi] = useVbenModal({
       } else {
         await createSpec(values);
       }
+      await specDictStore.refresh();
       emits('success');
       modalApi.close();
     } finally {

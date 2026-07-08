@@ -71,6 +71,18 @@ async function bootstrap(namespace: string) {
   });
 
   app.mount('#app');
+
+  const preloadSpecDict = () => {
+    void import('#/store/jx3-spec-dict').then(({ useJx3SpecDictStore }) => {
+      void useJx3SpecDictStore().ensureLoaded();
+    });
+  };
+
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(preloadSpecDict);
+  } else {
+    setTimeout(preloadSpecDict, 100);
+  }
 }
 
 export { bootstrap };

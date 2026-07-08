@@ -4,9 +4,10 @@ import { onMounted, ref } from 'vue';
 import { Plus, X } from '@vben/icons';
 
 import { Button, InputNumber, Select, Switch } from 'antdv-next';
+import { storeToRefs } from 'pinia';
 
-import { getSpecOptions } from '#/api/jx3/spec';
 import { $t } from '#/locales';
+import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 export interface TemplateSpecRuleItem {
   count: number;
@@ -16,11 +17,14 @@ export interface TemplateSpecRuleItem {
 
 const modelValue = defineModel<null | TemplateSpecRuleItem[]>({ default: null });
 
+const specDictStore = useJx3SpecDictStore();
+const { specOptionList } = storeToRefs(specDictStore);
+
 const specOptions = ref<Array<{ label: string; value: number }>>([]);
 
 onMounted(async () => {
-  const list = await getSpecOptions();
-  specOptions.value = list.map((item) => ({
+  await specDictStore.ensureLoaded();
+  specOptions.value = specOptionList.value.map((item) => ({
     label: item.label,
     value: Number(item.value),
   }));

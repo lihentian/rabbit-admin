@@ -83,7 +83,6 @@ export namespace Jx3TeamApi {
   export interface AvailableCharactersResult {
     canManageMembers?: boolean;
     characters: AvailableCharacterSlim[];
-    specDict: AvailableCharacterSpecDict;
   }
 
   export interface LayoutSlot {
