@@ -283,11 +283,17 @@ async function loadData() {
 //   loadData();
 // });
 
-watch(teamId, (id, prevId) => {
-  if (id && id !== prevId) {
-    void loadData();
-  }
-});
+watch(
+  teamId,
+  (id, prevId) => {
+    if (id && id !== prevId) {
+      void loadData();
+    }
+  },
+  {
+    immediate: true,
+  },
+);
 
 let activePointerId: null | number = null;
 let pendingPayload: DragPayload | null = null;
@@ -627,10 +633,6 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
     updateTabTitle();
   }
 }
-
-function onBack() {
-  router.push({ name: 'Jx3TeamList' });
-}
 </script>
 
 <template>
@@ -649,7 +651,6 @@ function onBack() {
           <Plus class="size-5" />
           {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
         </Button>
-        <Button @click="onBack">{{ $t('common.back') }}</Button>
         <Button
           v-if="canSaveLayout"
           :disabled="readonly || !teamId"
