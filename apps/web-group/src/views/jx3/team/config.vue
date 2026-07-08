@@ -1,9 +1,11 @@
 <script lang="ts" setup>
+defineOptions({ name: 'Jx3TeamConfig' });
+
 import type { SlotMember } from './modules/member-slot-grid.vue';
 
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
-import { computed, h, nextTick, onActivated, onBeforeUnmount, reactive, ref } from 'vue';
+import { computed, h, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -277,8 +279,14 @@ async function loadData() {
   void loadPool();
 }
 
-onActivated(() => {
-  loadData();
+// onActivated(() => {
+//   loadData();
+// });
+
+watch(teamId, (id, prevId) => {
+  if (id && id !== prevId) {
+    void loadData();
+  }
 });
 
 let activePointerId: null | number = null;
@@ -552,7 +560,7 @@ async function saveLayout(layoutSlots: Jx3TeamApi.LayoutSlot[]) {
   try {
     await updateTeamMemberLayout(teamRow.value.id, layoutSlots);
     message.success($t('jx3.team.saveLayoutSuccess'));
-    await loadData();
+    // await loadData();
   } finally {
     saving.value = false;
   }
@@ -605,9 +613,9 @@ function onFormSuccess(payload?: { id: string; teamName: string }) {
   loadData();
 }
 
-function onTeamSwitch(id: string) {
+function onTeamSwitch(id: string, teamName?: string) {
   if (!id || id === teamId.value) return;
-  navigateToTeam(id);
+  navigateToTeam(id, teamName);
 }
 
 function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {

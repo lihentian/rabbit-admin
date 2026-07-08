@@ -16,7 +16,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   'teams-loaded': [teams: Jx3TeamApi.Team[]];
-  'update:modelValue': [teamId: string];
+  'update:modelValue': [teamId: string, teamName?: string];
 }>();
 
 const loading = ref(false);
@@ -69,9 +69,9 @@ function onSearch(keywords: string) {
 }
 
 function onChange(teamId: string) {
-  console.log('onChange', teamId, props.modelValue);
   if (teamId && teamId !== props.modelValue) {
-    emits('update:modelValue', teamId);
+    const team = teams.value.find((item) => item.id === teamId);
+    emits('update:modelValue', teamId, team?.teamName);
   }
 }
 

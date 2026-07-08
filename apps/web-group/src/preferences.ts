@@ -11,4 +11,12 @@ export const overridesPreferences = defineOverridesPreferences({
     enableRefreshToken: true,
     name: import.meta.env.VITE_APP_TITLE,
   },
+  copyright: {
+    enable: true,
+    companyName: 'Rabbit',
+    companySiteLink: 'https://wyphb.com',
+    date: '2026',
+    icp: '苏ICP备12018196号-4',
+    icpLink: 'https://beian.miit.gov.cn/',
+  },
 });

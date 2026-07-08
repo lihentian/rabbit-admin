@@ -5,12 +5,17 @@ import { computed } from 'vue';
 
 import { AuthenticationLogin, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
+import { preferences } from '@vben/preferences';
 
 import { useAuthStore } from '#/store';
 
 defineOptions({ name: 'Login' });
 
 const authStore = useAuthStore();
+const loginTitle = '欢迎回来 👋🏻';
+const loginSubTitle = computed(
+  () => `请输入账号和密码以登录${preferences.app.name}`,
+);
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -44,6 +49,8 @@ const formSchema = computed((): VbenFormSchema[] => {
   <AuthenticationLogin
     :form-schema="formSchema"
     :loading="authStore.loginLoading"
+    :sub-title="loginSubTitle"
+    :title="loginTitle"
     @submit="authStore.authLogin"
   />
 </template>
