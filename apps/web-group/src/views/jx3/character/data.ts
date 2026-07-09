@@ -12,6 +12,7 @@ import { getCharacterSpecOptions } from '#/api/jx3/character';
 import { getGameAreaOptions } from '#/utils/jx3/jx';
 import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
+import { useLabelSearchSelectProps } from '#/utils/jx3/select';
 
 async function getAccountOptions(params?: Record<string, any>) {
   const result = await getAccountList({
@@ -65,6 +66,7 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
         class: 'w-full',
         labelField: 'label',
         valueField: 'value',
+        ...useLabelSearchSelectProps(),
       },
       dependencies: {
         componentProps(values) {
@@ -72,6 +74,7 @@ export function useFormSchema(isEdit = false): VbenFormSchema[] {
             api: getGameServerOptions,
             params: { gameArea: values.gameArea },
             shouldFetch: (params: Record<string, any>) => !!params?.gameArea,
+            ...useLabelSearchSelectProps(),
           };
         },
         triggerFields: ['gameArea'],
@@ -99,6 +102,7 @@ export function useSpecFormSchema(
         class: 'w-full',
         labelField: 'label',
         valueField: 'value',
+        ...useLabelSearchSelectProps(),
       },
       fieldName: 'specId',
       label: $t('jx3.character.specId'),

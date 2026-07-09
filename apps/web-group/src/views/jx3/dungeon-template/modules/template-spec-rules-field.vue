@@ -8,6 +8,7 @@ import { storeToRefs } from 'pinia';
 
 import { $t } from '#/locales';
 import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
+import { useLabelSearchSelectProps } from '#/utils/jx3/select';
 
 export interface TemplateSpecRuleItem {
   count: number;
@@ -26,6 +27,8 @@ const specOptions = computed(() =>
     value: Number(item.value),
   })),
 );
+
+const labelSearchSelectProps = useLabelSearchSelectProps();
 
 function addRow() {
   const list = modelValue.value ? [...modelValue.value] : [];
@@ -69,7 +72,7 @@ function updateItem<K extends keyof TemplateSpecRuleItem>(
           :options="specOptions"
           :placeholder="$t('jx3.dungeonTemplate.specId')"
           :value="item.specId"
-          show-search
+          v-bind="labelSearchSelectProps"
           @update:value="(v) => updateItem(index, 'specId', Number(v))"
         />
         <InputNumber

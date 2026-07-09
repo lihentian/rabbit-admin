@@ -21,6 +21,7 @@ import {
 } from '#/api/jx3/character';
 import { useJx3CharacterAccess } from '#/composables/use-jx3-character-access';
 import { $t } from '#/locales';
+import { useLabelSearchSelectProps } from '#/utils/jx3/select';
 
 import { useSpecColumns, useSpecFormSchema } from '../data';
 
@@ -77,6 +78,7 @@ const [SpecModal, specModalApi] = useVbenModal({
               if (!id) return [];
               return getCharacterSpecOptions(id, specRowId.value);
             },
+            ...useLabelSearchSelectProps(),
           },
         },
       ]);

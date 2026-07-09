@@ -4,18 +4,11 @@ import type { Jx3DungeonApi } from '#/api/jx3/dungeon';
 
 import { getDungeonOptions } from '#/api/jx3/dungeon';
 import { $t } from '#/locales';
+import { useLabelSearchSelectProps } from '#/utils/jx3/select';
 
 export interface DungeonSelectGroup {
   label: string;
   options: Array<{ label: string; value: string }>;
-}
-
-export function useLabelSearchSelectProps() {
-  return {
-    filterOption: true,
-    optionFilterProp: 'label',
-    showSearch: true,
-  };
 }
 
 export function useDungeonGroupedSelectProps() {

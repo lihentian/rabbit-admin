@@ -12,6 +12,7 @@ import type { useJx3TeamAccess } from '#/composables/use-jx3-team-access';
 import { getDungeonTemplateOptions } from '#/api/jx3/dungeon-template';
 import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
+import { useLabelSearchSelectProps } from '#/utils/jx3/select';
 import { useDungeonGroupedSelectProps, usePlayerCountOptions } from '#/views/jx3/dungeon/data';
 
 export function useOpenOptions() {
@@ -319,6 +320,7 @@ export function useJoinFormSchema(isOpen = false): VbenFormSchema[] {
         class: 'w-full',
         labelField: 'label',
         valueField: 'value',
+        ...useLabelSearchSelectProps(),
       },
       dependencies: {
         componentProps(values) {
@@ -326,6 +328,7 @@ export function useJoinFormSchema(isOpen = false): VbenFormSchema[] {
             api: getCharacterSpecOptions,
             params: { characterId: values.characterId },
             shouldFetch: (params: Record<string, any>) => !!params?.characterId,
+            ...useLabelSearchSelectProps(),
           };
         },
         async trigger(values, _formApi, controller) {

@@ -14,6 +14,7 @@ import { $t } from '#/locales';
 import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 import { createEmptySpec } from '#/utils/jx3/account-create';
 import { EXTRA_SECT_NAMES, getGameAreaOptions } from '#/utils/jx3/jx';
+import { useLabelSearchSelectProps } from '#/utils/jx3/select';
 
 const modelValue = defineModel<null | QuickCreateCharacterItem[]>({
   default: null,
@@ -23,6 +24,7 @@ const { specOptionList: specOptions } = storeToRefs(useJx3SpecDictStore());
 const serverOptionsMap = ref<Record<number, Array<{ label: string; value: string }>>>({});
 
 const gameAreaOptions = getGameAreaOptions();
+const labelSearchSelectProps = useLabelSearchSelectProps();
 
 function createEmptyCharacter(): QuickCreateCharacterItem {
   return {
@@ -213,7 +215,7 @@ function getCharacterTitle(charIndex: number) {
                 :value="character.gameServerId"
                 allow-clear
                 class="w-full"
-                show-search
+                v-bind="labelSearchSelectProps"
                 @update:value="(v) => updateCharacter(charIndex, 'gameServerId', v as string)"
               />
             </div>
@@ -230,7 +232,7 @@ function getCharacterTitle(charIndex: number) {
                 :placeholder="$t('jx3.dungeonTemplate.specId')"
                 :value="spec.specId"
                 class="min-w-[140px] flex-1"
-                show-search
+                v-bind="labelSearchSelectProps"
                 @update:value="(v) => updateSpec(charIndex, specIndex, 'specId', v as string)"
               />
               <CombatPowerInput
