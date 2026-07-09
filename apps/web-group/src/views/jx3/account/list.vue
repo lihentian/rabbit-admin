@@ -8,7 +8,7 @@ import type { Jx3AccountApi } from '#/api/jx3/account';
 import { ref } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
-import { Plus } from '@vben/icons';
+import { Plus, Inbox, Download } from '@vben/icons';
 
 import { Button, message } from 'antdv-next';
 
@@ -20,9 +20,11 @@ import { $t } from '#/locales';
 import { useColumns, useGridFormSchema } from './data';
 import DetailDrawer from './modules/detail-drawer.vue';
 import Form from './modules/form.vue';
+import QuickImportModal from './modules/quick-import-modal.vue';
 
 const accountAccess = useJx3AccountAccess();
 const detailDrawerRef = ref<InstanceType<typeof DetailDrawer>>();
+const quickImportModalRef = ref<InstanceType<typeof QuickImportModal>>();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -39,6 +41,10 @@ function onEdit(row: Jx3AccountApi.Account) {
 
 function onCreate() {
   formDrawerApi.setData(null).open();
+}
+
+function onQuickImport() {
+  quickImportModalRef.value?.open();
 }
 
 function onDelete(row: Jx3AccountApi.Account) {
@@ -120,8 +126,17 @@ function refreshGrid() {
   <Page auto-content-height>
     <FormDrawer @success="refreshGrid" />
     <DetailDrawer ref="detailDrawerRef" />
+    <QuickImportModal ref="quickImportModalRef" @success="refreshGrid" />
     <Grid :table-title="$t('jx3.account.list')">
       <template #toolbar-tools>
+        <Button
+          v-if="accountAccess.canCreate.value"
+          class="mr-2"
+          @click="onQuickImport"
+        >
+          <Inbox class="size-5" />
+          {{ $t('jx3.account.quickImport') }}
+        </Button>
         <Button
           v-if="accountAccess.canCreate.value"
           type="primary"

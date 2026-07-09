@@ -1,8 +1,20 @@
 import type { UserInfo } from '@vben/types';
 
+import { preferences } from '@vben/preferences';
 import { useAccessStore } from '@vben/stores';
 
 import { requestClient } from '#/api/request';
+
+/** 与 sys_role.name 对齐（JX3_STAFF） */
+const JX3_STAFF_ROLE_NAME = '客服';
+const JX3_STAFF_HOME_PATH = '/jx3/team';
+
+function resolveHomePath(roleNames?: string[]): string {
+  if (roleNames?.includes(JX3_STAFF_ROLE_NAME)) {
+    return JX3_STAFF_HOME_PATH;
+  }
+  return preferences.app.defaultHomePath;
+}
 
 export namespace UserApi {
   export interface MeResult {
@@ -25,7 +37,7 @@ function mapToUserInfo(data: UserApi.MeResult): UserInfo {
   return {
     avatar: data.avatar || '',
     desc: data.email || '',
-    homePath: '/analytics',
+    homePath: resolveHomePath(data.roleNames),
     realName: data.nickname || data.username,
     roles: data.roleNames || [],
     token: '',

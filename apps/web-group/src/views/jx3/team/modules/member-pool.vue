@@ -8,6 +8,7 @@ import { Input, Spin } from 'antdv-next';
 import { storeToRefs } from 'pinia';
 
 import { $t } from '#/locales';
+import SpecIcon from '#/components/jx3/SpecIcon.vue';
 import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import { enrichAvailableSpec } from '../utils/enrich-available-character';
@@ -256,7 +257,7 @@ function poolAttrFilterBtnClass(active: boolean) {
             :title="specFilterTitle(spec)"
             @click="toggleSpecFilter(spec.specId)"
           >
-            <img
+            <SpecIcon
               v-if="spec.specIcon"
               :alt="spec.specAlias"
               class="size-7 object-contain"

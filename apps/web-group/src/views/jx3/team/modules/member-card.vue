@@ -7,6 +7,7 @@ import { computed } from 'vue';
 
 import { Tooltip } from 'antdv-next';
 
+import SpecIcon from '#/components/jx3/SpecIcon.vue';
 import { $t } from '#/locales';
 import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
@@ -134,7 +135,7 @@ function onPointerDown(event: PointerEvent) {
         class="member-card-icon-col pointer-events-none absolute bottom-1 left-0 top-0 z-10 flex w-8 flex-col items-center justify-between"
       >
         <div class="member-card-icon shrink-0">
-          <img
+          <SpecIcon
             :alt="character.specAlias"
             class="size-8 object-contain"
             draggable="false"

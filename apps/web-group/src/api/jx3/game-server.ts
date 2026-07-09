@@ -41,7 +41,13 @@ async function deleteGameServer(ids: string | string[]) {
 
 async function getGameServerOptions(gameArea?: string) {
   return requestClient.get<
-    Array<{ gameArea: string; label: string; value: string }>
+    Array<{
+      alias?: string;
+      gameArea: string;
+      label: string;
+      serverName?: string;
+      value: string;
+    }>
   >('/jx3/game-servers/options', { params: { gameArea } });
 }
 

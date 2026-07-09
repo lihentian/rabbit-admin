@@ -10,6 +10,7 @@ export namespace Jx3AccountApi {
     password?: string;
     remark?: null | string;
     serviceId: string;
+    serviceName?: string;
     userId: string;
   }
 
@@ -61,6 +62,44 @@ export namespace Jx3AccountApi {
   export interface AccountDetail extends Account {
     characters: AccountFullUpdateCharacter[];
   }
+
+  export interface QuickImportRow {
+    account: string;
+    characterName: string;
+    combatPower?: number;
+    password: string;
+    remark?: string;
+    serverText: string;
+    specText: string;
+  }
+
+  export type QuickImportAction = 'create' | 'skip' | 'update_remark';
+
+  export interface QuickImportRowResult {
+    action?: QuickImportAction;
+    errors?: string[];
+    resolved?: {
+      combatPower: number;
+      gameArea: string;
+      gameServerId: string;
+      serverName: string;
+      specAlias: string;
+      specId: string;
+    };
+    rowIndex: number;
+    status: 'error' | 'valid';
+  }
+
+  export interface QuickImportResult {
+    hasError: boolean;
+    rows: QuickImportRowResult[];
+    summary: {
+      create: number;
+      error: number;
+      skip: number;
+      updateRemark: number;
+    };
+  }
 }
 
 async function getAccountList(params: Recordable<any>) {
@@ -109,6 +148,13 @@ async function deleteAccount(ids: string | string[]) {
   return requestClient.delete(`/jx3/accounts/${idStr}`);
 }
 
+async function quickImportAccounts(rows: Jx3AccountApi.QuickImportRow[], dryRun = true) {
+  return requestClient.post<Jx3AccountApi.QuickImportResult>('/jx3/accounts/quick-import', {
+    dryRun,
+    rows,
+  });
+}
+
 export {
   createAccount,
   createAccountFull,
@@ -117,6 +163,7 @@ export {
   getAccountDetail,
   getAccountForm,
   getAccountList,
+  quickImportAccounts,
   updateAccount,
   updateAccountFull,
 };

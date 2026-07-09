@@ -128,7 +128,7 @@ export function useColumns(
     {
       align: 'center',
       cellRender: {
-        name: 'CellImage',
+        name: 'CellSpecIcon',
         props: { height: 32, width: 32 },
       },
       field: 'specIcon',

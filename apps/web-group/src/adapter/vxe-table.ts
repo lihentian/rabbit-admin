@@ -20,6 +20,8 @@ import { Button, Image, Popconfirm, Switch, Tag } from 'antdv-next';
 
 import { $t } from '#/locales';
 
+import SpecIcon from '#/components/jx3/SpecIcon.vue';
+
 import { useVbenForm } from './form';
 
 setupVbenVxeTable({
@@ -62,6 +64,21 @@ setupVbenVxeTable({
         const { props } = renderOpts;
         const { column, row } = params;
         return h(Image, { src: row[column.field], ...props });
+      },
+    });
+
+    vxeUI.renderer.add('CellSpecIcon', {
+      renderTableDefault(renderOpts, params) {
+        const { props } = renderOpts;
+        const { column, row } = params;
+        return h(SpecIcon, {
+          class: 'object-contain',
+          src: row[column.field],
+          style: {
+            height: `${props?.height ?? 32}px`,
+            width: `${props?.width ?? 32}px`,
+          },
+        });
       },
     });
 

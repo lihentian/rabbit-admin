@@ -10,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'antdv-next';
 import { defineStore } from 'pinia';
 
-import { getUserInfoApi, loginApi, logoutApi } from '#/api';
+import { getUserInfoApi, loginApi, logoutApi, type AuthApi } from '#/api';
 import { cleanupSse, useSse } from '#/composables/use-sse';
 import { $t } from '#/locales';
 
@@ -23,9 +23,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function authLogin(params: Recordable<any>, onSuccess?: () => Promise<void> | void) {
     let userInfo: null | UserInfo = null;
+    const loginParams: AuthApi.LoginParams = {
+      captchaCode: params.captchaCode,
+      captchaId: params.captchaId,
+      password: params.password,
+      username: params.username,
+    };
     try {
       loginLoading.value = true;
-      const { accessToken, refreshToken } = await loginApi(params);
+      const { accessToken, refreshToken } = await loginApi(loginParams);
 
       if (accessToken) {
         accessStore.setAccessToken(accessToken);

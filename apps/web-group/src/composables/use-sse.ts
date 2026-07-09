@@ -3,6 +3,9 @@ import { computed, readonly, ref } from 'vue';
 import { useAppConfig } from '@vben/hooks';
 import { useAccessStore } from '@vben/stores';
 
+/** 暂时关闭 SSE，恢复实时推送时改为 true */
+const SSE_ENABLED = false;
+
 type EventHandler = (data: unknown) => void;
 
 interface SseParseState {
@@ -84,12 +87,13 @@ function createSseConnection() {
   }
 
   function scheduleReconnect() {
-    if (isManualDisconnect || reconnectAttempts >= 10) return;
+    if (!SSE_ENABLED || isManualDisconnect || reconnectAttempts >= 10) return;
     reconnectAttempts += 1;
     reconnectTimer = setTimeout(() => connect(), Math.min(5000 * reconnectAttempts, 60000));
   }
 
   function connect() {
+    if (!SSE_ENABLED) return;
     isManualDisconnect = false;
     const accessStore = useAccessStore();
     const token = accessStore.accessToken;
