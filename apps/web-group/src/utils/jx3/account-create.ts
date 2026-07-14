@@ -106,8 +106,6 @@ export function buildFullPayload(
     })),
     password: values.password,
     remark: values.remark,
-    serviceId: values.serviceId,
-    userId: values.userId,
   };
 }
 
@@ -135,7 +133,5 @@ export function buildFullUpdatePayload(
     })),
     password: values.password,
     remark: values.remark,
-    serviceId: values.serviceId,
-    userId: values.userId,
   };
 }

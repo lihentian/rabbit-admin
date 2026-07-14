@@ -97,7 +97,6 @@
     "addCharacter": "添加角色",
     "removeCharacter": "移除角色",
     "specsSection": "心法",
-    "currentUserRequired": "未获取到当前登录用户，请重新登录",
     "charactersRequired": "请至少添加一个角色",
     "specsRequired": "每个角色至少添加一条心法",
     "quickImport": "快速导入",

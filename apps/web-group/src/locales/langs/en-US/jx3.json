@@ -97,7 +97,6 @@
     "addCharacter": "Add Character",
     "removeCharacter": "Remove Character",
     "specsSection": "Specs",
-    "currentUserRequired": "Current user not found. Please sign in again.",
     "charactersRequired": "Add at least one character",
     "specsRequired": "Each character needs at least one spec",
     "quickImport": "Quick Import",

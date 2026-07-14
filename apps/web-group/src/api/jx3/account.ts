@@ -53,8 +53,6 @@ export namespace Jx3AccountApi {
     characters: AccountFullCharacter[];
     password: string;
     remark?: string;
-    serviceId: string;
-    userId: string;
   }
 
   export interface AccountFullUpdateSpec extends AccountFullSpec {
@@ -78,8 +76,6 @@ export namespace Jx3AccountApi {
     characters: AccountFullUpdateCharacter[];
     password: string;
     remark?: string;
-    serviceId: string;
-    userId: string;
   }
 
   export interface AccountDetail extends Omit<Account, 'characters'> {
