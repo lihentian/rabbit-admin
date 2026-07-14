@@ -26,18 +26,19 @@ import { $t } from '#/locales';
 import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import Form from './modules/form.vue';
-import MemberAccountModal from './modules/member-account-modal.vue';
 import {
   POOL_CARD_MIN_WIDTH,
   POOL_PANEL_MIN_WIDTH,
   SQUAD_COLUMN_MAX_WIDTH,
 } from './modules/member-card.constants';
 import MemberCard from './modules/member-card.vue';
+import MemberInfoPanel from './modules/member-info-panel.vue';
 import MemberPool from './modules/member-pool.vue';
 import MemberSlotGrid from './modules/member-slot-grid.vue';
 import TeamSwitcher from './modules/team-switcher.vue';
 import { getSpecMeta } from './utils/enrich-available-character';
 import { getLayoutIssueLabelWidth, renderLayoutIssue } from './utils/layout-composition-issue';
+import { exportTeamMembersXlsx } from './utils/team-export';
 
 interface DragPayload {
   characterId: string;
@@ -65,10 +66,19 @@ const poolLoading = ref(false);
 const saving = ref(false);
 const teamsLoaded = ref(false);
 const hasActiveTeams = ref(false);
-const accountModalRef = ref<InstanceType<typeof MemberAccountModal>>();
 const teamSwitcherRef = ref<InstanceType<typeof TeamSwitcher>>();
+const selectedCharacterId = ref<null | string>(null);
 
-const { canCreate, canSaveLayout, canUsePool } = useJx3TeamAccess();
+const selectedMember = computed<null | SlotMember>(() => {
+  const id = selectedCharacterId.value;
+  if (!id) return null;
+  for (const m of Object.values(slots)) {
+    if (m?.characterId === id) return m;
+  }
+  return null;
+});
+
+const { canCreate, canSaveLayout, canUsePool, canViewAccount } = useJx3TeamAccess();
 const { specDict } = storeToRefs(useJx3SpecDictStore());
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -90,6 +100,10 @@ const slottedCharacterIds = computed(
         .filter(Boolean)
         .map((m) => m!.characterId),
     ),
+);
+
+const slottedMembers = computed(() =>
+  Object.values(slots).filter((m): m is SlotMember => !!m),
 );
 
 type DragPreviewCharacter = Pick<
@@ -185,26 +199,24 @@ function resetSlots(playerCount: number) {
 function toSlotMember(
   char: Jx3TeamApi.AvailableCharacterSlim,
   characterSpecId?: string,
-  member?:
-    | Pick<Jx3TeamApi.TeamMember, 'coversBigIron' | 'coversSmallIron' | 'coversTeam'>
-    | SlotMember,
+  member?: Pick<Jx3TeamApi.TeamMember, 'coversTeam'> | SlotMember,
 ): SlotMember {
   const spec = char.specs.find((s) => s.characterSpecId === characterSpecId) ?? char.specs[0];
   const specId = spec?.specId ?? char.specId;
   const meta = getSpecMeta(specDict.value, specId);
   return {
+    bigIron: !!char.bigIron,
     cdConflict: char.cdConflict,
     characterId: char.characterId,
     characterName: char.characterName,
     characterSpecId: spec?.characterSpecId ?? char.characterSpecId,
     combatPower: spec?.combatPower ?? char.combatPower,
-    coversSmallIron: !!member?.coversSmallIron,
-    coversBigIron: !!member?.coversBigIron,
     coversTeam: !!member?.coversTeam,
     isCw: !!(spec?.isCw ?? char.isCw),
     sectId: meta.sectId,
     sectName: meta.sectName,
     serverName: char.serverName,
+    smallIron: !!char.smallIron,
     specAlias: meta.specAlias,
     specIcon: meta.specIcon,
   };
@@ -212,16 +224,16 @@ function toSlotMember(
 
 function toSlotMemberFromTeamMember(member: Jx3TeamApi.TeamMember): SlotMember {
   return {
+    bigIron: !!member.bigIron,
     characterId: member.characterId,
     characterName: member.characterName ?? '',
     characterSpecId: member.characterSpecId ?? '',
     combatPower: member.combatPower ?? 0,
-    coversSmallIron: !!member.coversSmallIron,
-    coversBigIron: !!member.coversBigIron,
     coversTeam: !!member.coversTeam,
     sectId: member.sectId,
     sectName: member.sectName,
     serverName: member.serverName ?? undefined,
+    smallIron: !!member.smallIron,
     specAlias: member.specAlias,
     specIcon: null,
   };
@@ -287,6 +299,7 @@ watch(
   teamId,
   (id, prevId) => {
     if (id && id !== prevId) {
+      selectedCharacterId.value = null;
       void loadData();
     }
   },
@@ -396,6 +409,8 @@ function onWindowPointerUp(event: PointerEvent) {
     } else if (target?.type === 'pool') {
       onDropToPool();
     }
+  } else if (!pointerDragStarted && pendingPayload?.source === 'slot') {
+    selectedCharacterId.value = pendingPayload.characterId;
   }
 
   dragging.value = null;
@@ -469,23 +484,15 @@ function assignToSlot(
 }
 
 function onCoversUpdated(
-  joinSort: number,
+  characterId: string,
   payload: {
-    coversBigIron: boolean;
-    coversSmallIron: boolean;
     coversTeam: boolean;
   },
 ) {
-  const member = slots[joinSort];
-  if (!member) return;
-  member.coversSmallIron = payload.coversSmallIron;
-  member.coversBigIron = payload.coversBigIron;
-  member.coversTeam = payload.coversTeam;
-}
-
-function onViewAccount(characterId: string) {
-  if (!teamId.value) return;
-  accountModalRef.value?.open({ teamId: teamId.value, characterId });
+  for (const member of Object.values(slots)) {
+    if (member?.characterId !== characterId) continue;
+    member.coversTeam = payload.coversTeam;
+  }
 }
 
 function onDropToSlot(joinSort: number) {
@@ -591,6 +598,47 @@ async function onSave() {
   await saveLayout(layoutSlots);
 }
 
+const exporting = ref(false);
+
+const canExport = computed(() => canViewAccount.value);
+
+const filledSlotCount = computed(() => slottedMembers.value.length);
+
+function confirmExportNotFull(current: number, total: number) {
+  return new Promise<boolean>((resolve) => {
+    Modal.confirm({
+      cancelText: $t('common.cancel'),
+      content: $t('jx3.team.exportNotFullContent', [current, total]),
+      okText: $t('jx3.team.exportAnyway'),
+      onCancel: () => resolve(false),
+      onOk: () => resolve(true),
+      title: $t('jx3.team.exportNotFullTitle'),
+    });
+  });
+}
+
+async function onExport() {
+  if (!teamRow.value || !teamId.value || exporting.value) return;
+  const total = teamRow.value.playerCount;
+  const filled = filledSlotCount.value;
+  if (filled < total) {
+    const confirmed = await confirmExportNotFull(filled, total);
+    if (!confirmed) return;
+  }
+  exporting.value = true;
+  try {
+    const members = await getTeamMembers(teamId.value);
+    if (!members.length) {
+      message.warning($t('jx3.team.exportEmpty'));
+      return;
+    }
+    await exportTeamMembersXlsx(teamRow.value.teamName, members);
+    message.success($t('jx3.team.exportSuccess'));
+  } finally {
+    exporting.value = false;
+  }
+}
+
 function updateTabTitle(teamName?: string) {
   const title = teamName ? `${$t('jx3.team.config')} - ${teamName}` : $t('jx3.team.config');
   setTabTitle(title);
@@ -652,6 +700,14 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
           {{ $t('ui.actionTitle.create', [$t('jx3.team.name')]) }}
         </Button>
         <Button
+          v-if="canExport"
+          :disabled="!teamId || loading"
+          :loading="exporting"
+          @click="onExport"
+        >
+          {{ $t('jx3.team.exportMembers') }}
+        </Button>
+        <Button
           v-if="canSaveLayout"
           :disabled="readonly || !teamId"
           :loading="saving"
@@ -679,20 +735,26 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
         class="flex min-h-0 flex-1 items-stretch gap-3"
         :class="{ 'pointer-events-none opacity-60': loading }"
       >
-        <MemberSlotGrid
-          class="shrink-0 self-start"
-          :column-count="columnCount"
-          :dragging-from-join-sort="dragging?.source === 'slot' ? dragging.fromJoinSort : undefined"
-          :drop-target-join-sort="dropTargetJoinSort"
-          :player-count="teamRow?.playerCount ?? 25"
-          :readonly="readonly"
-          :slots="slots"
-          :team-context="teamContext"
-          :team-id="teamId"
-          @covers-updated="onCoversUpdated"
-          @pickup="onSlotPickup"
-          @view-account="onViewAccount"
-        />
+        <div class="flex shrink-0 flex-col self-start">
+          <MemberSlotGrid
+            :column-count="columnCount"
+            :dragging-from-join-sort="dragging?.source === 'slot' ? dragging.fromJoinSort : undefined"
+            :drop-target-join-sort="dropTargetJoinSort"
+            :player-count="teamRow?.playerCount ?? 25"
+            :readonly="readonly"
+            :slots="slots"
+            :team-context="teamContext"
+            @pickup="onSlotPickup"
+          />
+          <MemberInfoPanel
+            :all-members="slottedMembers"
+            :column-count="columnCount"
+            :member="selectedMember"
+            :readonly="readonly"
+            :team-id="teamId"
+            @covers-updated="onCoversUpdated"
+          />
+        </div>
         <MemberPool
           v-if="canUsePool"
           class="h-full min-h-0 min-w-0 flex-1"
@@ -725,7 +787,6 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
       </div>
     </Teleport>
 
-    <MemberAccountModal ref="accountModalRef" />
     <FormDrawer @success="onFormSuccess" />
   </Page>
 </template>

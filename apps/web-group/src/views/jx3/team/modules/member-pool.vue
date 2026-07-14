@@ -7,17 +7,13 @@ import { useElementSize, useLocalStorage, useVirtualList } from '@vueuse/core';
 import { Input, Spin } from 'antdv-next';
 import { storeToRefs } from 'pinia';
 
-import { $t } from '#/locales';
 import SpecIcon from '#/components/jx3/SpecIcon.vue';
+import { $t } from '#/locales';
 import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import { enrichAvailableSpec } from '../utils/enrich-available-character';
 import { getCdConflictMessage, hasCdConflict } from '../utils/use-cd-conflict';
-import {
-  POOL_CARD_MIN_WIDTH,
-  POOL_GRID_GAP,
-  POOL_ROW_HEIGHT,
-} from './member-card.constants';
+import { POOL_CARD_MIN_WIDTH, POOL_GRID_GAP, POOL_ROW_HEIGHT } from './member-card.constants';
 import MemberCard from './member-card.vue';
 
 type PositionFilter = 'all' | 'd' | 'n' | 't';
@@ -70,12 +66,18 @@ const poolCharacters = computed(() => {
   const result: Jx3TeamApi.AvailableCharacter[] = [];
   for (const char of props.characters) {
     if (char.specs.length <= 1) {
-      result.push(enrichAvailableSpec(char, char.specs[0] ?? {
-        characterSpecId: char.characterSpecId,
-        specId: char.specId,
-        combatPower: char.combatPower,
-        isCw: char.isCw,
-      }, specDict.value));
+      result.push(
+        enrichAvailableSpec(
+          char,
+          char.specs[0] ?? {
+            characterSpecId: char.characterSpecId,
+            specId: char.specId,
+            combatPower: char.combatPower,
+            isCw: char.isCw,
+          },
+          specDict.value,
+        ),
+      );
       continue;
     }
     for (const spec of char.specs) {
@@ -207,6 +209,13 @@ function resolveCdConflictMessage(item: Jx3TeamApi.AvailableCharacterSlim) {
   return getCdConflictMessage(item, props.teamContext);
 }
 
+function resolveCovers(item: Jx3TeamApi.AvailableCharacterSlim) {
+  return {
+    smallIron: !!item.smallIron,
+    bigIron: !!item.bigIron,
+  };
+}
+
 function poolAttrFilterBtnClass(active: boolean) {
   return active
     ? 'border-primary bg-primary/10 text-primary'
@@ -330,6 +339,7 @@ function poolAttrFilterBtnClass(active: boolean) {
               :character="item"
               :cd-conflict="resolveCdConflict(item)"
               :cd-conflict-message="resolveCdConflictMessage(item)"
+              :covers="resolveCovers(item)"
               :disabled="isSlottedItem(item)"
               :dragging="isDraggingItem(item)"
               :overlay="isSlottedItem(item)"

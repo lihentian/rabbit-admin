@@ -1,11 +1,30 @@
 import type { Recordable } from '@vben/types';
 
-import { toPageParams, toPageResult } from '#/api/helper/pagination';
+import { type PageResult, toPageParams, toPageResult } from '#/api/helper/pagination';
 import { requestClient } from '#/api/request';
 
 export namespace Jx3AccountApi {
+  export interface AccountCharacterSpec {
+    combatPower: number;
+    id: string;
+    isCw: number;
+    specAlias: string;
+    specIcon: string | null;
+    specId: string;
+  }
+
+  export interface AccountCharacterBrief {
+    bigIron: number;
+    characterName: string;
+    id: string;
+    serverName: string | null;
+    smallIron: number;
+    specs: AccountCharacterSpec[];
+  }
+
   export interface Account {
     account: string;
+    characters?: AccountCharacterBrief[];
     id: string;
     password?: string;
     remark?: null | string;
@@ -21,9 +40,11 @@ export namespace Jx3AccountApi {
   }
 
   export interface AccountFullCharacter {
+    bigIron?: boolean | number;
     characterName: string;
     gameArea: string;
     gameServerId: string;
+    smallIron?: boolean | number;
     specs: AccountFullSpec[];
   }
 
@@ -42,11 +63,13 @@ export namespace Jx3AccountApi {
   }
 
   export interface AccountFullUpdateCharacter {
+    bigIron?: boolean | number;
     characterName: string;
     gameArea: string;
     gameServerId: string;
     id?: string;
     serverName?: string | null;
+    smallIron?: boolean | number;
     specs: AccountFullUpdateSpec[];
   }
 
@@ -59,7 +82,7 @@ export namespace Jx3AccountApi {
     userId: string;
   }
 
-  export interface AccountDetail extends Account {
+  export interface AccountDetail extends Omit<Account, 'characters'> {
     characters: AccountFullUpdateCharacter[];
   }
 
@@ -103,9 +126,12 @@ export namespace Jx3AccountApi {
 }
 
 async function getAccountList(params: Recordable<any>) {
-  const res = await requestClient.get('/jx3/accounts', {
-    params: toPageParams(params),
-  });
+  const res = await requestClient.get<PageResult<Jx3AccountApi.Account>>(
+    '/jx3/accounts',
+    {
+      params: toPageParams(params),
+    },
+  );
   return toPageResult(res);
 }
 

@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { CoversMember } from '../utils/team-covers-availability';
-
 import type { Jx3TeamApi } from '#/api/jx3/team';
 
 import { computed } from 'vue';
@@ -13,7 +11,6 @@ import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
 import CoverBadge from './cover-badge.vue';
 import { MEMBER_CARD_HEIGHT, MEMBER_CARD_HEIGHT_WITH_REMARK } from './member-card.constants';
-import MemberMenu from './member-menu.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -31,19 +28,15 @@ const props = defineProps<{
     | 'specAlias'
     | 'specIcon'
   >;
+  /** 徽标数据源：`smallIron` / `bigIron` 来自角色属性，`coversTeam` 仍从成员读取 */
+  covers?: {
+    bigIron?: boolean;
+    coversTeam?: boolean;
+    smallIron?: boolean;
+  };
   disabled?: boolean;
   /** 拖拽源占位：变灰且不可再次拖动 */
   dragging?: boolean;
-  menuContext?: {
-    allMembers: CoversMember[];
-    characterId: string;
-    coversBigIron?: boolean;
-    coversSmallIron?: boolean;
-    coversTeam?: boolean;
-    readonly?: boolean;
-    sectId?: string;
-    teamId: string;
-  };
   /** 已上阵等不可用态：黑色半透明遮罩 */
   overlay?: boolean;
   /** 角色池等内部场景显示账号备注，团队面板不显示 */
@@ -51,15 +44,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  coversUpdated: [
-    payload: {
-      coversBigIron: boolean;
-      coversSmallIron: boolean;
-      coversTeam: boolean;
-    },
-  ];
   pickup: [event: PointerEvent];
-  viewAccount: [];
 }>();
 
 const cardHeight = computed(() =>
@@ -76,15 +61,13 @@ const combatPowerText = computed(() => {
 
 const inactive = computed(() => props.disabled || props.dragging);
 
-const showMemberMenu = computed(() => !!props.menuContext);
-
 const coverBadges = computed(() => {
-  const ctx = props.menuContext;
-  if (!ctx) return [];
+  const covers = props.covers;
+  if (!covers) return [];
   const badges: string[] = [];
-  if (ctx.coversSmallIron) badges.push($t('jx3.team.coverBadgeSmallIron'));
-  if (ctx.coversBigIron) badges.push($t('jx3.team.coverBadgeBigIron'));
-  if (ctx.coversTeam) badges.push($t('jx3.team.coverBadgeTeam'));
+  if (covers.smallIron) badges.push($t('jx3.team.coverBadgeSmallIron'));
+  if (covers.bigIron) badges.push($t('jx3.team.coverBadgeBigIron'));
+  if (covers.coversTeam) badges.push($t('jx3.team.coverBadgeTeam'));
   return badges;
 });
 
@@ -95,80 +78,66 @@ function onPointerDown(event: PointerEvent) {
 </script>
 
 <template>
-  <MemberMenu
-    :all-members="menuContext?.allMembers ?? []"
-    :character-id="menuContext?.characterId ?? ''"
-    :covers-big-iron="menuContext?.coversBigIron"
-    :covers-small-iron="menuContext?.coversSmallIron"
-    :covers-team="menuContext?.coversTeam"
-    :enabled="showMemberMenu"
-    :readonly="!!menuContext?.readonly"
-    :sect-id="menuContext?.sectId"
-    :team-id="menuContext?.teamId ?? ''"
-    @updated="emit('coversUpdated', $event)"
-    @view-account="emit('viewAccount')"
+  <div
+    v-bind="$attrs"
+    class="member-card relative flex items-stretch"
+    :style="{ height: `${cardHeight}px` }"
+    :class="{
+      'pointer-events-none': inactive,
+      'member-card--overlay': overlay && !dragging,
+      'member-card--dragging': dragging,
+      'cursor-default': inactive,
+      'cursor-grab active:cursor-grabbing': !inactive,
+    }"
+    @pointerdown="onPointerDown"
   >
-    <div
-      v-bind="$attrs"
-      class="member-card relative flex items-stretch"
-      :style="{ height: `${cardHeight}px` }"
-      :class="{
-        'pointer-events-none': inactive,
-        'member-card--overlay': overlay && !dragging,
-        'member-card--dragging': dragging,
-        'cursor-default': inactive,
-        'cursor-grab active:cursor-grabbing': !inactive,
-      }"
-      @pointerdown="onPointerDown"
-    >
-      <Tooltip v-if="cdConflict" :title="cdConflictMessage" placement="topRight">
-        <span class="member-card-cd absolute right-1 top-1 z-10 cursor-help select-none"> CD </span>
-      </Tooltip>
+    <Tooltip v-if="cdConflict" :title="cdConflictMessage" placement="topRight">
+      <span class="member-card-cd absolute right-1 top-1 z-10 cursor-help select-none"> CD </span>
+    </Tooltip>
 
-      <div
-        v-if="coverBadges.length"
-        class="member-card-badges pointer-events-none absolute bottom-0.5 right-1 z-10 flex items-center gap-0.5"
-      >
-        <CoverBadge v-for="badge in coverBadges" :key="badge" :label="badge" size="card" />
+    <div
+      v-if="coverBadges.length"
+      class="member-card-badges pointer-events-none absolute bottom-0.5 right-1 z-10 flex items-center gap-0.5"
+    >
+      <CoverBadge v-for="badge in coverBadges" :key="badge" :label="badge" size="card" />
+    </div>
+    <div
+      class="member-card-icon-col pointer-events-none absolute bottom-1 left-0 top-0 z-10 flex w-8 flex-col items-center justify-between"
+    >
+      <div class="member-card-icon shrink-0">
+        <SpecIcon
+          :alt="character.specAlias"
+          class="size-8 object-contain"
+          draggable="false"
+          :src="character.specIcon"
+        />
+      </div>
+      <span v-if="character.isCw" class="member-card-cw select-none" aria-hidden="true">橙</span>
+    </div>
+    <div
+      class="flex min-w-0 flex-1 flex-col justify-between self-stretch select-none py-1 pb-1 pl-9"
+    >
+      <div class="member-card-text truncate text-[16px] font-semibold leading-tight">
+        {{ character.characterName }}
+      </div>
+      <div class="member-card-text truncate text-xs leading-tight opacity-90">
+        {{ character.serverName }}
       </div>
       <div
-        class="member-card-icon-col pointer-events-none absolute bottom-1 left-0 top-0 z-10 flex w-8 flex-col items-center justify-between"
+        v-if="showAccountRemark"
+        class="member-card-remark-row truncate"
+        :class="{ 'member-card-remark-row--empty': accountRemarkEmpty }"
+        :title="accountRemarkText"
       >
-        <div class="member-card-icon shrink-0">
-          <SpecIcon
-            :alt="character.specAlias"
-            class="size-8 object-contain"
-            draggable="false"
-            :src="character.specIcon"
-          />
-        </div>
-        <span v-if="character.isCw" class="member-card-cw select-none" aria-hidden="true">橙</span>
-      </div>
-      <div
-        class="flex min-w-0 flex-1 flex-col justify-between self-stretch select-none py-1 pb-1 pl-9"
-      >
-        <div class="member-card-text truncate text-[16px] font-semibold leading-tight">
-          {{ character.characterName }}
-        </div>
-        <div class="member-card-text truncate text-xs leading-tight opacity-90">
-          {{ character.serverName }}
-        </div>
-        <div
-          v-if="showAccountRemark"
-          class="member-card-remark-row truncate"
-          :class="{ 'member-card-remark-row--empty': accountRemarkEmpty }"
-          :title="accountRemarkText"
-        >
-          {{ accountRemarkDisplay }}
-        </div>
-      </div>
-      <div
-        class="member-card-text shrink-0 select-none self-center pr-2 text-sm font-semibold text-amber-200"
-      >
-        {{ combatPowerText }}
+        {{ accountRemarkDisplay }}
       </div>
     </div>
-  </MemberMenu>
+    <div
+      class="member-card-text shrink-0 select-none self-center pr-2 text-sm font-semibold text-amber-200"
+    >
+      {{ combatPowerText }}
+    </div>
+  </div>
 </template>
 
 <style scoped>

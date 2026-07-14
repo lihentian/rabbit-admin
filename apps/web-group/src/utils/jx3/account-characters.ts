@@ -20,10 +20,12 @@ export async function loadAccountCharacters(
 ): Promise<QuickCreateCharacterItem[]> {
   const characters = await getAccountCharacters(accountId);
   return characters.map((character) => ({
+    bigIron: !!character.bigIron,
     characterName: character.characterName,
     gameArea: character.gameArea,
     gameServerId: character.gameServerId,
     id: character.id,
+    smallIron: !!character.smallIron,
     specs: character.specs.length
       ? character.specs.map(toQuickCreateSpec)
       : [createEmptySpec()],

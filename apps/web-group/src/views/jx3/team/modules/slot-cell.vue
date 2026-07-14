@@ -26,36 +26,11 @@ defineProps<{
   isDropTarget?: boolean;
   joinSort: number;
   member: SlotMember | null;
-  menuContext?: {
-    allMembers: {
-      characterId: string;
-      characterName: string;
-      coversBigIron?: boolean;
-      coversSmallIron?: boolean;
-      coversTeam?: boolean;
-      sectId?: string;
-    }[];
-    characterId: string;
-    coversBigIron?: boolean;
-    coversSmallIron?: boolean;
-    coversTeam?: boolean;
-    readonly?: boolean;
-    sectId?: string;
-    teamId: string;
-  };
   readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
-  coversUpdated: [
-    payload: {
-      coversBigIron: boolean;
-      coversSmallIron: boolean;
-      coversTeam: boolean;
-    },
-  ];
   pickup: [event: PointerEvent];
-  viewAccount: [characterId: string];
 }>();
 
 function toCardCharacter(member: SlotMember): SlotCardCharacter {
@@ -66,6 +41,14 @@ function toCardCharacter(member: SlotMember): SlotCardCharacter {
     serverName: member.serverName,
     specAlias: member.specAlias ?? '',
     specIcon: member.specIcon ?? '',
+  };
+}
+
+function toCardCovers(member: SlotMember) {
+  return {
+    bigIron: !!member.bigIron,
+    coversTeam: !!member.coversTeam,
+    smallIron: !!member.smallIron,
   };
 }
 </script>
@@ -85,12 +68,10 @@ function toCardCharacter(member: SlotMember): SlotCardCharacter {
       :character="toCardCharacter(member)"
       :cd-conflict="cdConflict"
       :cd-conflict-message="cdConflictMessage"
+      :covers="toCardCovers(member)"
       :disabled="readonly"
       :dragging="isDragging"
-      :menu-context="menuContext"
-      @covers-updated="emit('coversUpdated', $event)"
       @pickup="emit('pickup', $event)"
-      @view-account="emit('viewAccount', member.characterId)"
     />
     <div
       v-else

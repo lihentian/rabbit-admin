@@ -124,7 +124,16 @@
     "importValidateFirst": "请先点击「校验」，通过后再确认导入",
     "actionCreate": "新建",
     "actionUpdateRemark": "更新备注",
-    "actionSkip": "跳过"
+    "actionSkip": "跳过",
+    "keywordsPlaceholder": "账号 / 角色 / 备注",
+    "characterName": "角色",
+    "serverName": "服务器",
+    "spec": "心法",
+    "combatPower": "装分",
+    "covers": "小铁/大铁",
+    "copyPassword": "复制密码",
+    "copySuccess": "密码已复制",
+    "copyFailed": "复制失败"
   },
   "character": {
     "title": "游戏角色",
@@ -141,6 +150,8 @@
     "cds": "副本CD",
     "specId": "心法",
     "combatPower": "装分",
+    "smallIron": "小铁",
+    "bigIron": "大铁",
     "cdStatus": "CD状态",
     "cdStatusAvailable": "可用",
     "cdStatusReserved": "预占",
@@ -213,10 +224,7 @@
     "joinType": "入团方式",
     "joinTypeSelf": "自助",
     "joinTypeService": "客服",
-    "coversSmallIron": "包小铁",
-    "coversBigIron": "包大铁",
     "coversTeam": "包团",
-    "viewAccountInfo": "查看账号信息",
     "accountRemark": "账号备注",
     "gameServer": "区服",
     "coversUpdateFailed": "设置保存失败",
@@ -232,6 +240,14 @@
     "confirmForceComplete": "团队未满，确认强制完成？",
     "switchTeam": "切换团队",
     "selectTeam": "选择团队",
-    "noActiveTeam": "暂无可用团队，请先创建"
+    "noActiveTeam": "暂无可用团队，请先创建",
+    "memberInfoTitle": "角色信息",
+    "memberInfoEmpty": "点击左侧角色卡片查看账号信息",
+    "exportMembers": "导出",
+    "exportNotFullTitle": "团队未满员",
+    "exportNotFullContent": "当前已排 {0} 人，团队要求 {1} 人，确认导出？",
+    "exportAnyway": "仍要导出",
+    "exportSuccess": "导出成功",
+    "exportEmpty": "暂无可导出的成员"
   }
 }

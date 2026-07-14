@@ -29,8 +29,6 @@ const [Modal, modalApi] = useVbenModal({
     const values = await joinFormApi.getValues();
     const payload = {
       ...values,
-      coversSmallIron: values.coversSmallIron ? 1 : 0,
-      coversBigIron: values.coversBigIron ? 1 : 0,
       coversTeam: values.coversTeam ? 1 : 0,
       joinType: teamRow.value.isOpen === 1 ? values.joinType : 2,
     };

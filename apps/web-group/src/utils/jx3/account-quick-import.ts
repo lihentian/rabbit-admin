@@ -2,6 +2,7 @@ import type { Jx3SpecApi } from '#/api/jx3/spec';
 
 import type { AccountImportServerOption, AccountQuickImportRow } from './account-import-template';
 
+import { COMBAT_POWER_ERROR, isValidCombatPower } from '#/utils/jx3/combat-power';
 import { $t } from '#/locales';
 
 export type QuickImportAction = 'create' | 'skip' | 'update_remark';
@@ -98,8 +99,8 @@ export function validateImportRows(
 
     if (row.combatPower !== undefined) {
       const value = Number(row.combatPower);
-      if (!Number.isInteger(value) || value < 0) {
-        errors.push('战力须为非负整数');
+      if (!isValidCombatPower(value)) {
+        errors.push(COMBAT_POWER_ERROR);
       }
     }
 

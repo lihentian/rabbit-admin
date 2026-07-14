@@ -9,38 +9,20 @@ import { SQUAD_COLUMN_MAX_WIDTH } from './member-card.constants';
 import SlotCell from './slot-cell.vue';
 
 export interface SlotMember {
+  bigIron?: boolean;
   cdConflict?: string;
   characterId: string;
   characterName: string;
   characterSpecId: string;
   combatPower: number;
-  coversBigIron?: boolean;
-  coversSmallIron?: boolean;
   coversTeam?: boolean;
   isCw?: boolean;
   sectId?: string;
   sectName?: string;
   serverName?: string;
+  smallIron?: boolean;
   specAlias?: string;
   specIcon?: null | string;
-}
-
-interface SlotMenuContext {
-  allMembers: {
-    characterId: string;
-    characterName: string;
-    coversBigIron?: boolean;
-    coversSmallIron?: boolean;
-    coversTeam?: boolean;
-    sectId?: string;
-  }[];
-  characterId: string;
-  coversBigIron?: boolean;
-  coversSmallIron?: boolean;
-  coversTeam?: boolean;
-  readonly?: boolean;
-  sectId?: string;
-  teamId: string;
 }
 
 const props = defineProps<{
@@ -55,20 +37,10 @@ const props = defineProps<{
     dungeonId: string;
     id: string;
   };
-  teamId: string;
 }>();
 
 const emit = defineEmits<{
-  coversUpdated: [
-    joinSort: number,
-    payload: {
-      coversBigIron: boolean;
-      coversSmallIron: boolean;
-      coversTeam: boolean;
-    },
-  ];
   pickup: [joinSort: number, event: PointerEvent];
-  viewAccount: [characterId: string];
 }>();
 
 const rowCount = computed(() => Math.ceil(props.playerCount / props.columnCount));
@@ -114,33 +86,7 @@ const slottedMembers = computed(() =>
 
 const cdLimitEnabled = computed(() => !!props.teamContext?.cdLimitEnabled);
 
-const menuContextByJoinSort = computed(() => {
-  const allMembers = slottedMembers.value.map((item) => ({
-    characterId: item.characterId,
-    characterName: item.characterName,
-    coversBigIron: item.coversBigIron,
-    coversSmallIron: item.coversSmallIron,
-    coversTeam: item.coversTeam,
-    sectId: item.sectId,
-  }));
-  const map = new Map<number, SlotMenuContext>();
-  for (const [joinSortStr, member] of Object.entries(props.slots)) {
-    if (!member) continue;
-    map.set(Number(joinSortStr), {
-      allMembers,
-      characterId: member.characterId,
-      coversBigIron: member.coversBigIron,
-      coversSmallIron: member.coversSmallIron,
-      coversTeam: member.coversTeam,
-      readonly: props.readonly,
-      sectId: member.sectId,
-      teamId: props.teamId,
-    });
-  }
-  return map;
-});
-
-function findHolders(key: 'coversBigIron' | 'coversSmallIron'): string[] {
+function findHolders(key: 'bigIron' | 'smallIron'): string[] {
   return slottedMembers.value.filter((m) => m[key]).map((m) => m.characterName);
 }
 
@@ -154,8 +100,8 @@ function formatCoverTeamHolder(member: SlotMember): string {
   return sect ? `${sect}-${member.characterName}` : member.characterName;
 }
 
-const smallIronHolder = computed(() => formatHolders(findHolders('coversSmallIron')));
-const bigIronHolder = computed(() => formatHolders(findHolders('coversBigIron')));
+const smallIronHolder = computed(() => formatHolders(findHolders('smallIron')));
+const bigIronHolder = computed(() => formatHolders(findHolders('bigIron')));
 const teamCoverHolders = computed(() =>
   formatHolders(slottedMembers.value.filter((m) => m.coversTeam).map(formatCoverTeamHolder)),
 );
@@ -163,17 +109,6 @@ const teamCoverTitle = computed(() => teamCoverHolders.value || undefined);
 
 function onPickup(joinSort: number, event: PointerEvent) {
   emit('pickup', joinSort, event);
-}
-
-function onCoversUpdated(
-  joinSort: number,
-  payload: {
-    coversBigIron: boolean;
-    coversSmallIron: boolean;
-    coversTeam: boolean;
-  },
-) {
-  emit('coversUpdated', joinSort, payload);
 }
 
 function resolveCdConflict(member: SlotMember) {
@@ -201,11 +136,8 @@ function resolveCdConflictMessage(member: SlotMember) {
           :is-drop-target="dropTargetJoinSort === slot.joinSort"
           :join-sort="slot.joinSort"
           :member="slot.member"
-          :menu-context="menuContextByJoinSort.get(slot.joinSort)"
           :readonly="readonly"
-          @covers-updated="(payload: { coversBigIron: boolean; coversSmallIron: boolean; coversTeam: boolean }) => onCoversUpdated(slot.joinSort, payload)"
           @pickup="(e: PointerEvent) => onPickup(slot.joinSort, e)"
-          @view-account="emit('viewAccount', $event)"
         />
       </div>
     </div>
@@ -217,11 +149,11 @@ function resolveCdConflictMessage(member: SlotMember) {
         </div>
         <div class="team-summary-stat">
           <span class="team-summary-label">{{ $t('jx3.team.summarySmallIron') }}</span>
-          <span v-if="smallIronHolder" class="team-summary-value">{{ smallIronHolder }}</span>
+          <span class="team-summary-value">{{ smallIronHolder || '—' }}</span>
         </div>
         <div class="team-summary-stat">
           <span class="team-summary-label">{{ $t('jx3.team.summaryBigIron') }}</span>
-          <span v-if="bigIronHolder" class="team-summary-value">{{ bigIronHolder }}</span>
+          <span class="team-summary-value">{{ bigIronHolder || '—' }}</span>
         </div>
       </div>
       <div class="team-summary-team" :title="teamCoverTitle">

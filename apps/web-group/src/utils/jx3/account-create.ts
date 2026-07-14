@@ -12,10 +12,12 @@ export interface QuickCreateSpecItem {
 }
 
 export interface QuickCreateCharacterItem {
+  bigIron?: boolean;
   characterName?: string;
   gameArea?: string;
   gameServerId?: string;
   id?: string;
+  smallIron?: boolean;
   specs: QuickCreateSpecItem[];
 }
 
@@ -89,9 +91,11 @@ export function buildFullPayload(
   return {
     account: values.account,
     characters: characters.map((character) => ({
+      bigIron: character.bigIron ? 1 : 0,
       characterName: character.characterName!.trim(),
       gameArea: character.gameArea!,
       gameServerId: character.gameServerId!,
+      smallIron: character.smallIron ? 1 : 0,
       specs: character.specs
         .filter(hasSpecValue)
         .map((spec) => ({
@@ -114,10 +118,12 @@ export function buildFullUpdatePayload(
   return {
     account: values.account,
     characters: characters.map((character) => ({
+      bigIron: character.bigIron ? 1 : 0,
       characterName: character.characterName!.trim(),
       gameArea: character.gameArea!,
       gameServerId: character.gameServerId!,
       id: character.id,
+      smallIron: character.smallIron ? 1 : 0,
       specs: character.specs
         .filter(hasSpecValue)
         .map((spec) => ({

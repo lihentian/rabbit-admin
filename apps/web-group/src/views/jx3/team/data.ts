@@ -248,15 +248,15 @@ export function useMemberColumns(
       width: 100,
     },
     {
-      field: 'coversSmallIron',
+      field: 'smallIron',
       formatter: ({ cellValue }) => (cellValue ? $t('common.yes') : $t('common.no')),
-      title: $t('jx3.team.coversSmallIron'),
+      title: $t('jx3.character.smallIron'),
       width: 90,
     },
     {
-      field: 'coversBigIron',
+      field: 'bigIron',
       formatter: ({ cellValue }) => (cellValue ? $t('common.yes') : $t('common.no')),
-      title: $t('jx3.team.coversBigIron'),
+      title: $t('jx3.character.bigIron'),
       width: 90,
     },
     {
@@ -347,16 +347,6 @@ export function useJoinFormSchema(isOpen = false): VbenFormSchema[] {
       fieldName: 'characterSpecId',
       label: $t('jx3.team.characterSpecId'),
       rules: 'required',
-    },
-    {
-      component: 'Checkbox',
-      fieldName: 'coversSmallIron',
-      label: $t('jx3.team.coversSmallIron'),
-    },
-    {
-      component: 'Checkbox',
-      fieldName: 'coversBigIron',
-      label: $t('jx3.team.coversBigIron'),
     },
     {
       component: 'Checkbox',

@@ -5,6 +5,7 @@ import type { Jx3DungeonTemplateApi } from '#/api/jx3/dungeon-template';
 import { markRaw } from 'vue';
 
 import { $t } from '#/locales';
+import { formatCombatPowerLabel } from '#/utils/jx3/combat-power';
 
 import TemplateSpecRulesField from './modules/template-spec-rules-field.vue';
 
@@ -39,7 +40,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t('jx3.dungeonTemplate.minOrangeWeapon'),
     },
     {
-      component: 'InputNumber',
+      component: 'CombatPowerInput',
       componentProps: { class: 'w-full', min: 0 },
       fieldName: 'minTotalCombatPower',
       label: $t('jx3.dungeonTemplate.minTotalCombatPower'),
@@ -101,7 +102,10 @@ export function useColumns(
     },
     {
       field: 'minTotalCombatPower',
-      formatter: ({ cellValue }) => cellValue ?? '-',
+      formatter: ({ cellValue }) =>
+        cellValue == null
+          ? '-'
+          : formatCombatPowerLabel(cellValue, $t('jx3.team.combatPowerUnit')),
       title: $t('jx3.dungeonTemplate.minTotalCombatPower'),
       width: 110,
     },

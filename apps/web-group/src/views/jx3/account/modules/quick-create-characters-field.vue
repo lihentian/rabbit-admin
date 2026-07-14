@@ -28,9 +28,11 @@ const labelSearchSelectProps = useLabelSearchSelectProps();
 
 function createEmptyCharacter(): QuickCreateCharacterItem {
   return {
+    bigIron: false,
     characterName: '',
     gameArea: undefined,
     gameServerId: undefined,
+    smallIron: false,
     specs: [createEmptySpec()],
   };
 }
@@ -217,6 +219,27 @@ function getCharacterTitle(charIndex: number) {
                 class="w-full"
                 v-bind="labelSearchSelectProps"
                 @update:value="(v) => updateCharacter(charIndex, 'gameServerId', v as string)"
+              />
+            </div>
+          </div>
+
+          <div class="mb-3 flex items-center gap-6">
+            <div class="flex items-center gap-1.5">
+              <span class="text-muted-foreground text-sm">
+                {{ $t('jx3.character.smallIron') }}
+              </span>
+              <Switch
+                :checked="!!character.smallIron"
+                @update:checked="(v) => updateCharacter(charIndex, 'smallIron', !!v)"
+              />
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-muted-foreground text-sm">
+                {{ $t('jx3.character.bigIron') }}
+              </span>
+              <Switch
+                :checked="!!character.bigIron"
+                @update:checked="(v) => updateCharacter(charIndex, 'bigIron', !!v)"
               />
             </div>
           </div>

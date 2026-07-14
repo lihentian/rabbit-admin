@@ -27,12 +27,11 @@ export namespace Jx3TeamApi {
 
   export interface TeamMember {
     account?: string;
+    bigIron?: number;
     characterId: string;
     characterName?: string;
     characterSpecId?: string;
     combatPower?: number;
-    coversBigIron?: number;
-    coversSmallIron?: number;
     coversTeam?: number;
     gameArea?: string;
     joinSort?: null | number;
@@ -44,6 +43,7 @@ export namespace Jx3TeamApi {
     sectId?: string;
     sectName?: string;
     serverName?: null | string;
+    smallIron?: number;
     specAlias?: string;
   }
 
@@ -66,6 +66,7 @@ export namespace Jx3TeamApi {
 
   export interface AvailableCharacterSlim {
     accountRemark?: null | string;
+    bigIron?: boolean;
     cdConflict?: string;
     characterId: string;
     characterName: string;
@@ -73,6 +74,7 @@ export namespace Jx3TeamApi {
     combatPower: number;
     isCw?: boolean;
     serverName?: string;
+    smallIron?: boolean;
     specId: string;
     specs: AvailableCharacterSpecSlim[];
   }
@@ -124,8 +126,6 @@ export namespace Jx3TeamApi {
   }
 
   export interface UpdateMemberCoversPayload {
-    coversBigIron?: number;
-    coversSmallIron?: number;
     coversTeam?: number;
   }
 }

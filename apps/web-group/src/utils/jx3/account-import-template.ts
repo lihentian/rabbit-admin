@@ -3,6 +3,9 @@ import type { Jx3SpecApi } from '#/api/jx3/spec';
 import ExcelJS from 'exceljs';
 
 import { $t } from '#/locales';
+import {
+  isValidCombatPower,
+} from '#/utils/jx3/combat-power';
 
 export const IMPORT_HEADERS = [
   'account',
@@ -59,7 +62,7 @@ function cellText(value: ExcelJS.CellValue): string {
 function parseCombatPower(raw: string): number | undefined {
   if (!raw) return undefined;
   const value = Number(raw);
-  if (!Number.isInteger(value) || value < 0) return undefined;
+  if (!isValidCombatPower(value)) return undefined;
   return value;
 }
 

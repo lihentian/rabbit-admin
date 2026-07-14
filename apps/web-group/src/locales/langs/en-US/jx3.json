@@ -124,7 +124,16 @@
     "importValidateFirst": "Click Validate and fix errors before confirming import",
     "actionCreate": "Create",
     "actionUpdateRemark": "Update Remark",
-    "actionSkip": "Skip"
+    "actionSkip": "Skip",
+    "keywordsPlaceholder": "Account / Character / Remark",
+    "characterName": "Character",
+    "serverName": "Server",
+    "spec": "Spec",
+    "combatPower": "Combat Power",
+    "covers": "Small/Big Iron",
+    "copyPassword": "Copy password",
+    "copySuccess": "Password copied",
+    "copyFailed": "Copy failed"
   },
   "character": {
     "title": "Characters",
@@ -141,6 +150,8 @@
     "cds": "Dungeon CD",
     "specId": "Spec",
     "combatPower": "Combat Power",
+    "smallIron": "Small Iron",
+    "bigIron": "Big Iron",
     "cdStatus": "CD Status",
     "cdStatusAvailable": "Available",
     "cdStatusReserved": "Reserved",
@@ -213,10 +224,7 @@
     "joinType": "Join Type",
     "joinTypeSelf": "Self",
     "joinTypeService": "Service",
-    "coversSmallIron": "Covers Small Iron",
-    "coversBigIron": "Covers Big Iron",
     "coversTeam": "Covers Team",
-    "viewAccountInfo": "View Account",
     "accountRemark": "Account Remark",
     "gameServer": "Server",
     "coversUpdateFailed": "Failed to save settings",
@@ -232,6 +240,14 @@
     "confirmForceComplete": "Team not full, force complete?",
     "switchTeam": "Switch team",
     "selectTeam": "Select team",
-    "noActiveTeam": "No active teams, create one first"
+    "noActiveTeam": "No active teams, create one first",
+    "memberInfoTitle": "Member Info",
+    "memberInfoEmpty": "Click a member card to view account info",
+    "exportMembers": "Export",
+    "exportNotFullTitle": "Team not full",
+    "exportNotFullContent": "{0} of {1} slots filled. Export anyway?",
+    "exportAnyway": "Export anyway",
+    "exportSuccess": "Exported successfully",
+    "exportEmpty": "No members to export"
   }
 }
