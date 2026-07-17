@@ -128,6 +128,52 @@ export namespace Jx3TeamApi {
   export interface UpdateMemberCoversPayload {
     coversTeam?: number;
   }
+
+  export interface LootItem {
+    id: string;
+    slot: number;
+    name?: string;
+    category?: string;
+    quantity?: number;
+    price?: number;
+    ownerCharacterId?: null | string;
+    remark?: string;
+  }
+
+  export interface LootBoss {
+    bossIndex: number;
+    bossName?: string;
+    items: LootItem[];
+  }
+
+  export interface LootMember {
+    characterId: string;
+    characterName: string;
+    gameArea?: string;
+    serverName?: null | string;
+    account?: string;
+    password?: string;
+    accountRemark?: null | string;
+  }
+
+  export interface LootRecordsResult {
+    bossCount: number;
+    slotCount: number;
+    goldRatio: number;
+    bosses: LootBoss[];
+    members: LootMember[];
+    updatedAt?: string;
+  }
+
+  export interface UpdateLootRecordsPayload {
+    slotCount: number;
+    goldRatio: number;
+    bosses: Array<{
+      bossIndex: number;
+      bossName?: string;
+      items: LootItem[];
+    }>;
+  }
 }
 
 async function getTeamList(params: Recordable<any>) {
@@ -208,6 +254,22 @@ async function completeTeam(teamId: string, force?: boolean) {
   });
 }
 
+async function getTeamLootRecords(teamId: string) {
+  return requestClient.get<Jx3TeamApi.LootRecordsResult>(
+    `/jx3/teams/${teamId}/loot-records`,
+  );
+}
+
+async function updateTeamLootRecords(
+  teamId: string,
+  data: Jx3TeamApi.UpdateLootRecordsPayload,
+) {
+  return requestClient.put<Jx3TeamApi.LootRecordsResult>(
+    `/jx3/teams/${teamId}/loot-records`,
+    data,
+  );
+}
+
 export {
   completeTeam,
   createTeam,
@@ -215,12 +277,14 @@ export {
   getTeamAvailableCharacters,
   getTeamForm,
   getTeamList,
+  getTeamLootRecords,
   getTeamMemberAccount,
   getTeamMembers,
   joinTeam,
   leaveTeam,
   previewTeamMemberLayout,
   updateTeam,
+  updateTeamLootRecords,
   updateTeamMemberCovers,
   updateTeamMemberLayout,
 };

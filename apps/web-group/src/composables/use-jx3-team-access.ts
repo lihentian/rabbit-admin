@@ -23,6 +23,7 @@ export function useJx3TeamAccess() {
   const canEditCovers = computed(() => hasAccessByCodes(['jx3:team:member:covers']));
   const canViewAccount = computed(() => hasAccessByCodes(['jx3:team:member:account']));
   const canUsePool = computed(() => hasAccessByCodes(['jx3:team:available:list']));
+  const canManageLoot = computed(() => hasAccessByCodes(['jx3:team:loot']));
 
   return {
     canComplete,
@@ -30,6 +31,7 @@ export function useJx3TeamAccess() {
     canDelete,
     canEditCovers,
     canList,
+    canManageLoot,
     canManageMembers,
     canSaveLayout,
     canUpdate,

@@ -5,6 +5,7 @@ import { requestClient } from '#/api/request';
 
 export namespace Jx3DungeonApi {
   export interface Dungeon {
+    bossCount?: number;
     dungeonName: string;
     id: string;
     playerCount: number;
@@ -15,6 +16,7 @@ export namespace Jx3DungeonApi {
   }
 
   export interface DungeonOption {
+    bossCount?: number;
     label: string;
     playerCount: number;
     price: number;

@@ -26,6 +26,7 @@ import { $t } from '#/locales';
 import { useJx3SpecDictStore } from '#/store/jx3-spec-dict';
 
 import Form from './modules/form.vue';
+import LootDrawerContent from './modules/loot-drawer.vue';
 import {
   POOL_CARD_MIN_WIDTH,
   POOL_PANEL_MIN_WIDTH,
@@ -78,13 +79,28 @@ const selectedMember = computed<null | SlotMember>(() => {
   return null;
 });
 
-const { canCreate, canSaveLayout, canUsePool, canViewAccount } = useJx3TeamAccess();
+const { canCreate, canManageLoot, canSaveLayout, canUsePool, canViewAccount } = useJx3TeamAccess();
 const { specDict } = storeToRefs(useJx3SpecDictStore());
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
+
+const [LootDrawer, lootDrawerApi] = useVbenDrawer({
+  connectedComponent: LootDrawerContent,
+  destroyOnClose: true,
+});
+
+function onOpenLoot() {
+  if (!teamId.value) return;
+  lootDrawerApi
+    .setData({
+      teamId: teamId.value,
+      teamName: teamRow.value?.teamName,
+    })
+    .open();
+}
 
 const showEmpty = computed(() => teamsLoaded.value && !teamId.value && !hasActiveTeams.value);
 
@@ -708,6 +724,13 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
           {{ $t('jx3.team.exportMembers') }}
         </Button>
         <Button
+          v-if="canManageLoot"
+          :disabled="!teamId || loading"
+          @click="onOpenLoot"
+        >
+          {{ $t('jx3.team.loot.menu') }}
+        </Button>
+        <Button
           v-if="canSaveLayout"
           :disabled="readonly || !teamId"
           :loading="saving"
@@ -788,5 +811,6 @@ function onTeamsLoaded(teams: Jx3TeamApi.Team[]) {
     </Teleport>
 
     <FormDrawer @success="onFormSuccess" />
+    <LootDrawer />
   </Page>
 </template>

@@ -118,6 +118,14 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
+      component: 'InputNumber',
+      componentProps: { class: 'w-full', min: 0 },
+      defaultValue: 0,
+      fieldName: 'bossCount',
+      label: $t('jx3.dungeon.bossCount'),
+      help: $t('jx3.dungeon.bossCountHelp'),
+    },
+    {
       component: 'Textarea',
       componentProps: { rows: 3 },
       fieldName: 'remark',
@@ -190,6 +198,11 @@ export function useColumns(
       field: 'seniority',
       title: $t('jx3.dungeon.seniority'),
       width: 80,
+    },
+    {
+      field: 'bossCount',
+      title: $t('jx3.dungeon.bossCount'),
+      width: 90,
     },
     {
       field: 'remark',
