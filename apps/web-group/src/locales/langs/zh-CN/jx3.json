@@ -272,7 +272,7 @@
       "columnName": "物品",
       "columnCategory": "装备类型",
       "columnQuantity": "数量",
-      "columnPrice": "单价(金)",
+      "columnPrice": "单价(砖)",
       "columnSubtotal": "小计",
       "columnOwner": "归属人",
       "columnRemark": "备注",

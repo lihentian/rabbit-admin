@@ -272,7 +272,7 @@
       "columnName": "Item",
       "columnCategory": "Category",
       "columnQuantity": "Qty",
-      "columnPrice": "Price(Gold)",
+      "columnPrice": "Price(Brick)",
       "columnSubtotal": "Subtotal",
       "columnOwner": "Owner",
       "columnRemark": "Remark",

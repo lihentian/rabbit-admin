@@ -7,16 +7,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { Copy } from '@vben/icons';
 
 import { useDebounceFn } from '@vueuse/core';
-import {
-  Alert,
-  Input,
-  InputNumber,
-  message,
-  Modal,
-  Select,
-  TabPane,
-  Tabs,
-} from 'antdv-next';
+import { Alert, Input, InputNumber, message, Modal, Select, TabPane, Tabs } from 'antdv-next';
 
 import { getTeamLootRecords, updateTeamLootRecords } from '#/api/jx3/team';
 import { $t } from '#/locales';
@@ -84,13 +75,23 @@ function fillBossSlots(boss: Jx3TeamApi.LootBoss, target: number): Jx3TeamApi.Lo
 function isSlotFilled(item?: Jx3TeamApi.LootItem) {
   if (!item) return false;
   return Boolean(
-    (item.name && item.name.trim())
-      || (item.category && item.category.trim())
-      || item.ownerCharacterId
-      || (item.quantity && item.quantity > 0)
-      || (item.price && item.price > 0)
-      || (item.remark && item.remark.trim()),
+    (item.name && item.name.trim()) ||
+    (item.category && item.category.trim()) ||
+    item.ownerCharacterId ||
+    (item.quantity && item.quantity > 0) ||
+    (item.price && item.price > 0) ||
+    (item.remark && item.remark.trim()),
   );
+}
+
+function getCategoryTone(category?: string): '' | 'artifact' | 'legendary' {
+  const text = category?.trim() ?? '';
+  if (!text) return '';
+  // 橙装 (Legendary) 优先
+  if (/橙装|黄字|大铁|玄晶/.test(text)) return 'legendary';
+  // 紫装 (Artifact)
+  if (/紫装|精简/.test(text)) return 'artifact';
+  return '';
 }
 
 async function onChangeSlotCount(next: null | number | string | undefined) {
@@ -234,8 +235,8 @@ const summaryByOwner = computed(() => {
         items: [],
         totalPrice: 0,
       };
-      const qty = Number(it.quantity) || 1;
       const goldPrice = Number(it.price) || 0;
+      // 一格一件；不再乘 quantity（UI 已无数量，旧数据残留会把合计放大）
       const rmb = Math.floor((goldPrice * 100) / ratio);
       const category = it.category?.trim() || '';
       const itemName = it.name?.trim() || '';
@@ -245,7 +246,7 @@ const summaryByOwner = computed(() => {
       const label = parts.join('-');
       if (label) bucket.items.push(label);
       if (label) bucket.equipments.push(label);
-      bucket.totalPrice += qty * rmb;
+      bucket.totalPrice += rmb;
       map.set(cid, bucket);
     }
   }
@@ -270,9 +271,7 @@ const settlementRows = computed(() => {
   });
 });
 
-const grandTotal = computed(() =>
-  summaryByOwner.value.reduce((acc, x) => acc + x.totalPrice, 0),
-);
+const grandTotal = computed(() => summaryByOwner.value.reduce((acc, x) => acc + x.totalPrice, 0));
 
 async function copyText(text?: null | string) {
   if (!text) return;
@@ -288,6 +287,7 @@ function formatUpdatedAt(iso?: string) {
 }
 
 const [Drawer, drawerApi] = useVbenDrawer({
+  footer: false,
   onOpenChange(isOpen) {
     if (!isOpen) {
       reset();
@@ -315,10 +315,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         <span v-else-if="saveStatus === 'error'" class="text-red-500">
           {{ $t('jx3.team.loot.autoSaveFailed') }}
         </span>
-        <span
-          v-if="records?.updatedAt"
-          class="text-muted-foreground ml-1"
-        >
+        <span v-if="records?.updatedAt" class="text-muted-foreground ml-1">
           {{ $t('jx3.team.loot.updatedAt', [formatUpdatedAt(records.updatedAt)]) }}
         </span>
       </div>
@@ -372,81 +369,80 @@ const [Drawer, drawerApi] = useVbenDrawer({
                 gridAutoFlow: 'column',
               }"
             >
-                <div
-                  v-for="boss in bosses"
-                  :key="boss.bossIndex"
-                  class="flex flex-col overflow-hidden border-b border-r border-solid border-gray-200 dark:border-gray-700"
-                >
-                  <div class="bg-primary/10 text-primary px-2 py-1 text-sm font-semibold">
-                    {{ boss.bossName || $t('jx3.team.loot.bossTab', [boss.bossIndex]) }}
-                  </div>
-                  <div class="divide-y divide-gray-100 dark:divide-gray-800">
-                    <div
-                      v-for="item in boss.items"
-                      :key="item.id"
-                      class="grid items-center gap-1 px-2 py-1"
-                      :style="{
-                        gridTemplateColumns: '72px 1fr 120px 1fr auto',
-                      }"
+              <div
+                v-for="boss in bosses"
+                :key="boss.bossIndex"
+                class="flex flex-col overflow-hidden border-b border-r border-solid border-gray-200 dark:border-gray-700"
+              >
+                <div class="bg-primary/10 text-primary px-2 py-1 text-sm font-semibold">
+                  {{ boss.bossName || $t('jx3.team.loot.bossTab', [boss.bossIndex]) }}
+                </div>
+                <div class="divide-y divide-gray-100 dark:divide-gray-800">
+                  <div
+                    v-for="item in boss.items"
+                    :key="item.id"
+                    class="loot-slot-row grid items-center gap-1 px-2 py-1"
+                    :class="{
+                      'loot-slot-row--artifact': getCategoryTone(item.category) === 'artifact',
+                      'loot-slot-row--legendary': getCategoryTone(item.category) === 'legendary',
+                    }"
+                    :style="{
+                      gridTemplateColumns: '72px 1fr 120px 1fr auto',
+                    }"
+                  >
+                    <Input
+                      v-model:value="item.category"
+                      :placeholder="$t('jx3.team.loot.columnCategory')"
+                      size="small"
+                      :bordered="false"
+                      @change="onSlotFieldChange"
+                    />
+                    <Input
+                      v-model:value="item.name"
+                      :placeholder="$t('jx3.team.loot.columnName')"
+                      size="small"
+                      :bordered="false"
+                      @change="onSlotFieldChange"
+                    />
+                    <Select
+                      v-model:value="item.ownerCharacterId"
+                      :options="memberOptions"
+                      :placeholder="$t('jx3.team.loot.unassigned')"
+                      allow-clear
+                      size="small"
+                      :bordered="false"
+                      class="w-full"
+                      @change="onSlotFieldChange"
+                    />
+                    <InputNumber
+                      v-model:value="item.price"
+                      :placeholder="$t('jx3.team.loot.columnPrice')"
+                      :min="0"
+                      :precision="0"
+                      size="small"
+                      :controls="false"
+                      :bordered="false"
+                      class="w-full"
+                      @change="onSlotFieldChange"
+                    />
+                    <button
+                      v-if="isSlotFilled(item)"
+                      type="button"
+                      class="loot-slot-row__clear text-xs"
+                      :title="$t('jx3.team.loot.clearSlot')"
+                      @click="onClearSlot(boss.bossIndex, item.slot)"
                     >
-                      <Input
-                        v-model:value="item.category"
-                        :placeholder="$t('jx3.team.loot.columnCategory')"
-                        size="small"
-                        :bordered="false"
-                        @change="onSlotFieldChange"
-                      />
-                      <Input
-                        v-model:value="item.name"
-                        :placeholder="$t('jx3.team.loot.columnName')"
-                        size="small"
-                        :bordered="false"
-                        @change="onSlotFieldChange"
-                      />
-                      <Select
-                        v-model:value="item.ownerCharacterId"
-                        :options="memberOptions"
-                        :placeholder="$t('jx3.team.loot.unassigned')"
-                        allow-clear
-                        size="small"
-                        :bordered="false"
-                        class="w-full"
-                        @change="onSlotFieldChange"
-                      />
-                      <InputNumber
-                        v-model:value="item.price"
-                        :placeholder="$t('jx3.team.loot.columnPrice')"
-                        :min="0"
-                        :precision="0"
-                        size="small"
-                        :controls="false"
-                        :bordered="false"
-                        class="w-full"
-                        @change="onSlotFieldChange"
-                      />
-                      <button
-                        v-if="isSlotFilled(item)"
-                        type="button"
-                        class="text-muted-foreground hover:text-red-500 text-xs"
-                        :title="$t('jx3.team.loot.clearSlot')"
-                        @click="onClearSlot(boss.bossIndex, item.slot)"
-                      >
-                        ×
-                      </button>
-                      <span v-else class="text-muted-foreground/40 text-xs">·</span>
-                    </div>
+                      ×
+                    </button>
+                    <span v-else class="loot-slot-row__dot text-xs">·</span>
                   </div>
                 </div>
               </div>
+            </div>
           </TabPane>
 
           <TabPane key="summary" :tab="$t('jx3.team.loot.tabSummary')">
             <div class="border border-solid border-gray-200 p-3 dark:border-gray-700">
-              <div class="mb-2 flex items-center justify-end">
-                <span class="text-xs text-emerald-500">
-                  {{ $t('jx3.team.loot.grandTotal') }}: {{ grandTotal }}
-                </span>
-              </div>
               <div v-if="summaryByOwner.length === 0" class="text-muted-foreground text-xs">
                 {{ $t('jx3.team.loot.empty') }}
               </div>
@@ -455,7 +451,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   <tr class="text-muted-foreground text-left text-xs">
                     <th class="py-1 pr-2">{{ $t('jx3.team.loot.summaryColumnCharacter') }}</th>
                     <th class="py-1 pr-2">{{ $t('jx3.team.loot.summaryColumnItems') }}</th>
-                    <th class="py-1 text-right">{{ $t('jx3.team.loot.summaryColumnTotalPrice') }}</th>
+                    <th class="py-1 text-right">
+                      {{ $t('jx3.team.loot.summaryColumnTotalPrice') }}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -470,6 +468,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
                   </tr>
                 </tbody>
               </table>
+              <div class="mt-2 flex items-center justify-end">
+                <span class="text-xs text-emerald-500">
+                  {{ $t('jx3.team.loot.grandTotal') }}: {{ grandTotal }}
+                </span>
+              </div>
             </div>
           </TabPane>
 
@@ -535,3 +538,41 @@ const [Drawer, drawerApi] = useVbenDrawer({
     </div>
   </Drawer>
 </template>
+
+<style scoped>
+.loot-slot-row--artifact {
+  color: #b8a600;
+}
+
+.loot-slot-row--legendary {
+  color: #f2830f;
+}
+
+.loot-slot-row--artifact :deep(input),
+.loot-slot-row--artifact :deep(.ant-input),
+.loot-slot-row--artifact :deep(.ant-select-selection-item),
+.loot-slot-row--artifact :deep(.ant-select-selection-placeholder),
+.loot-slot-row--artifact :deep(.ant-input-number-input),
+.loot-slot-row--legendary :deep(input),
+.loot-slot-row--legendary :deep(.ant-input),
+.loot-slot-row--legendary :deep(.ant-select-selection-item),
+.loot-slot-row--legendary :deep(.ant-select-selection-placeholder),
+.loot-slot-row--legendary :deep(.ant-input-number-input) {
+  color: inherit !important;
+}
+
+.loot-slot-row__clear {
+  color: inherit;
+  opacity: 0.65;
+}
+
+.loot-slot-row__clear:hover {
+  color: #ef4444;
+  opacity: 1;
+}
+
+.loot-slot-row__dot {
+  color: inherit;
+  opacity: 0.35;
+}
+</style>
